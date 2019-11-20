@@ -66,6 +66,8 @@
         <?php
 		//this tells the system that it's no longer just parsing html; it's now parsing PHP
 
+        include 'connectToDB.php';
+
         $success = True; //keep track of errors so it redirects the page only if there are no errors
         $db_conn = NULL; // edit the login credentials in connectToDB()
         $show_debug_alert_messages = False; // set to True if you want alerts to show you which methods are being triggered (see how it is used in debugAlertMessage())
@@ -148,24 +150,6 @@
             }
 
             echo "</table>";
-        }
-
-        function connectToDB() {
-            global $db_conn;
-
-            // Your username is ora_(CWL_ID) and the password is a(student number). For example,
-			// ora_platypus is the username and a12345678 is the password.
-            $db_conn = OCILogon("ora_meichic1", "a31736168", "dbhost.students.cs.ubc.ca:1522/stu");
-
-            if ($db_conn) {
-                debugAlertMessage("Database is Connected");
-                return true;
-            } else {
-                debugAlertMessage("Cannot connect to Database");
-                $e = OCI_Error(); // For OCILogon errors pass no handle
-                echo htmlentities($e['message']);
-                return false;
-            }
         }
 
         function disconnectFromDB() {
