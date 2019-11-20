@@ -1,14 +1,14 @@
-/*
-drop table if exists branch cascade;
-drop table if exists vehicleType cascade;
-drop table if exists vehicle cascade;
-drop table if exists customer cascade;
-drop table if exists reservation cascade;
-drop table if exists rentals cascade;
-drop table if exists creditCard cascade;
-drop table if exists return cascade;
-drop table if exists timePeriod cascade;
-*/
+
+drop table if exists branch;
+drop table if exists vehicleType;
+drop table if exists vehicle;
+drop table if exists customer;
+drop table if exists reservation;
+drop table if exists rental
+drop table if exists creditCard;
+drop table if exists return;
+drop table if exists timePeriod;
+
 --
 -- Now, add each table.
 --
@@ -16,7 +16,7 @@ drop table if exists timePeriod cascade;
 create table branch (
 	location varchar2(50) not null,
 	city varchar2(20) not null,
-	primary key(location, city)
+	PRIMARY KEY (location, city)
 );
 
 create table vehicleType (
@@ -42,37 +42,42 @@ create table vehicle(
 	location varchar2(50) not null,
 	city varchar2(20) not null,
 	foreign key (vtname) references vehicleType,
-	foreign key (location) references branch,
-	foreign key (city) references branch
+	foreign key (location, city) references branch
 );
 
 create table customer(
 	dlicense varchar2(20) PRIMARY KEY,
 	name varchar2(20) not null,
 	address varchar2(50) not null,
-	cellphone integer not null,
+	cellphone integer not null
+);
+
+create table timePeriod (
+	fromdate date not null,
+	fromtime time(0) not null,
+	todate date not null,
+	totime time(0) not null,
+	PRIMARY KEY (fromdate, fromtime, todate, totime)
 );
 
 create table reservation(
 	confno varchar2(50) PRIMARY KEY
-	rentid varchar2(20),
+	/*rentid varchar2(20),*/
 	vtname varchar2(20) not null,
 	dlicense varchar2(20) not null,
 	fromdate date not null,
 	fromtime time(0) not null,
 	todate date not null,
 	totime time(0) not null,
-	foreign key (rentid) references rentals,
+	/*foreign key (rentid) references rental,*/
 	foreign key (vtname) references vehicleType,
 	foreign key (dlicense) references customer,
-	foreign key (fromdate) references timePeriod,
-	foreign key (fromtime) references timePeriod,
-	foreign key (todate) references timePeriod,
-	foreign key (totime) references timePeriod
+	foreign key (fromdate, fromtime, todate, totime) references timePeriod
 );
 
-create table rentals (
+create table rental (
 	rentid varchar2(20) PRIMARY KEY,
+	confno varchar2(20),
 	cardno integer not null,
 	odometer float not null,
 	vlicense varchar2(20) not null,
@@ -81,38 +86,32 @@ create table rentals (
 	todate date not null,
 	totime time(0) not null,
 	dlicense varchar2(20) not null,
-	foreign key (cardno) references creditCard,
+	/*foreign key (cardno) references creditCard,*/
+	foreign key (confno) references reservation,
 	foreign key (vlicense) references vehicle,
-	foreign key (fromdate) references timePeriod,
-	foreign key (fromtime) references timePeriod,
-	foreign key (todate) references timePeriod,
-	foreign key (totime) references timePeriod,
+	foreign key (fromdate, fromtime, todate, totime) references timePeriod,
 	foreign key (dlicense) references customer
 );
 
+/*
 create table creditCard (
 	cardno integer PRIMARY KEY,
 	cardname varchar(30) not null,
 	expdate date not null
 );
+*/
 
 create table return (
 	rentid varchar2(20) PRIMARY KEY,
-	date Date not null,
-	time time(0) not null,
+	rdate date not null,
+	rtime time(0) not null,
 	odometer float not null,
 	fulltank varchar2(20) not null,
 	value float not null,
-	foreign key (rentid) references rentals
+	foreign key (rentid) references rental
 );
 
-create table timePeriod (
-	fromdate date not null,
-	fromtime time(0) not null,
-	todate date not null,
-	totime time(0) not null,
-	primary key (fromdate, fromtime, todate, totime)
-);
+
 
 /*
 insert into branch values('123 Cordova Street', 'Vancouver');
@@ -158,10 +157,10 @@ insert into reservation values('RES1456542298', 'R1456542298', 'Truck', 'VA24553
 insert into reservation values('RES4564932499', 'R4564932499', 'Mid-size', 'VA92837', date '2019-11-30', time '10:53', date '2019-12-13', time '13:23');
 insert into reservation values('RES2358793411', 'R2358793411', 'SUV', 'VA09811', date '2019-11-03', time '10:30', date '2019-11-15', time '12:57');
 
-insert into rentals values('R1234567890', 1234567890123456, 25345, 'HELLOO', date '2019-11-01', time '13:30', date '2019-11-11', time '16:30', 'VA12345');
-insert into rentals values('R1456542298', 2334243545623445, 206300, '125ABC', date '2019-11-03', time '09:30', date '2019-11-15', time '16:30', 'VA24553');
-insert into rentals values('R4564932499', 1123453343325454, 45344, '456ABD', date '2019-11-30', time '10:53', date '2019-12-13', time '16:30', 'VA92837');
-insert into rentals values('R2358793411', 1234454656344564, 423533, '143ILY', date '2019-11-03', time '10:30', date '2019-11-30', time '16:30', 'VA09811');
+insert into rental values('R1234567890', 1234567890123456, 25345, 'HELLOO', date '2019-11-01', time '13:30', date '2019-11-11', time '16:30', 'VA12345');
+insert into rental values('R1456542298', 2334243545623445, 206300, '125ABC', date '2019-11-03', time '09:30', date '2019-11-15', time '16:30', 'VA24553');
+insert into rental values('R4564932499', 1123453343325454, 45344, '456ABD', date '2019-11-30', time '10:53', date '2019-12-13', time '16:30', 'VA92837');
+insert into rental values('R2358793411', 1234454656344564, 423533, '143ILY', date '2019-11-03', time '10:30', date '2019-11-30', time '16:30', 'VA09811');
 
 insert into creditCard values(1234567890123456, 'John Doe', date '2020-01-31');
 insert into creditCard values(2334243545623445, 'Jill Katrina', date '2020-08-31');
