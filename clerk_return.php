@@ -6,7 +6,7 @@
   on Oracle.
   Specifically, it will drop a table, create a table, insert values
   update values, and then query for values
- 
+
   IF YOU HAVE A TABLE CALLED "demoTable" IT WILL BE DESTROYED
 
   The script assumes you already have a server set up
@@ -64,7 +64,7 @@
         </form>
 
         <?php
-		//this tells the system that it's no longer just parsing html; it's now parsing PHP
+		//this tells the system that it's no longer just parsing html; it's now parsing PHP ------------------------- END OF HTML ----------------------------
         include 'connectToDB.php';
 
         $success = True; //keep track of errors so it redirects the page only if there are no errors
@@ -140,14 +140,31 @@
         }
 
         function printResult($result) { //prints results from a select statement
+            $header = false;
+
             echo "<br>Retrieved data from table demoTable:<br>";
             echo "<table>";
-            echo "<tr><th>ID</th><th>Name</th></tr>";
-
             while ($row = OCI_Fetch_Array($result, OCI_BOTH)) {
-                echo "<tr><td>" . $row["NID"] . "</td><td>" . $row["NAME"] . "</td></tr>"; //or just use "echo $row[0]"
-            }
+                $numKeys = array_filter(array_keys($row), function($numKey) {return is_int($numKey);});
+                $assocKeys = array_filter(array_keys($row), function($assocKey) {return is_string($assocKey);});
 
+                // output header/column/attribute names
+                if (!$header) {
+                    echo "<thead><tr>";
+                    foreach ($assocKeys as $key) {
+                        echo '<th>' . ($key !== null ? htmlentities($key, ENT_QUOTES) : '') . str_repeat("&nbsp;", 5) . '</th>';
+                    }
+                    echo "</tr></thead>";
+                    $header = true;
+                }
+
+                // output all the data rows.
+                echo '<tr>';
+                foreach ($numKeys as $index) {
+                    echo "<td>" . $row[$index] . str_repeat("&nbsp;", 5) . "</td>";
+                }
+                echo '</tr>';
+            }
             echo "</table>";
         }
 
@@ -229,6 +246,8 @@
             if (connectToDB()) {
                 if (array_key_exists('countTuples', $_GET)) {
                     handleCountRequest();
+                } else if (array_key_exists('showTable', $_GET)) {
+                    handleShowTableRequest();
                 }
 
                 disconnectFromDB();
@@ -237,7 +256,7 @@
 
 		if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
             handlePOSTRequest();
-        } else if (isset($_GET['countTupleRequest'])) {
+        } else if (isset($_GET['countTupleRequest']) || isset($_GET['showTableRequest'])) {
             handleGETRequest();
         }
 		?>

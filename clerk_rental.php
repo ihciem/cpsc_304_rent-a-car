@@ -63,9 +63,16 @@
             <input type="submit" name="countTuples"></p>
         </form>
 
-        <?php
-		//this tells the system that it's no longer just parsing html; it's now parsing PHP
+        <hr />
 
+        <h2>Receipt</h2>
+        <form method="GET" action="clerk_rental.php"> <!--refresh page when submitted-->
+            <input type="hidden" id="showTableRequest" name="showTableRequest">
+            <input type="submit" name="showTable"></p>
+        </form>
+
+        <?php
+		//this tells the system that it's no longer just parsing html; it's now parsing PHP ------------------------- END OF HTML ----------------------------
         include 'connectToDB.php';
 
         $success = True; //keep track of errors so it redirects the page only if there are no errors
@@ -141,14 +148,31 @@
         }
 
         function printResult($result) { //prints results from a select statement
+            $header = false;
+
             echo "<br>Retrieved data from table demoTable:<br>";
             echo "<table>";
-            echo "<tr><th>ID</th><th>Name</th></tr>";
-
             while ($row = OCI_Fetch_Array($result, OCI_BOTH)) {
-                echo "<tr><td>" . $row["NID"] . "</td><td>" . $row["NAME"] . "</td></tr>"; //or just use "echo $row[0]"
-            }
+                $numKeys = array_filter(array_keys($row), function($numKey) {return is_int($numKey);});
+                $assocKeys = array_filter(array_keys($row), function($assocKey) {return is_string($assocKey);});
 
+                // output header/column/attribute names
+                if (!$header) {
+                    echo "<thead><tr>";
+                    foreach ($assocKeys as $key) {
+                        echo '<th>' . ($key !== null ? htmlentities($key, ENT_QUOTES) : '') . str_repeat("&nbsp;", 5) . '</th>';
+                    }
+                    echo "</tr></thead>";
+                    $header = true;
+                }
+
+                // output all the data rows.
+                echo '<tr>';
+                foreach ($numKeys as $index) {
+                    echo "<td>" . $row[$index] . str_repeat("&nbsp;", 5) . "</td>";
+                }
+                echo '</tr>';
+            }
             echo "</table>";
         }
 
@@ -208,6 +232,14 @@
             }
         }
 
+        function handleShowTableRequest() {
+            global $db_conn;
+
+            $result = executePlainSQL("SELECT * FROM demoTable");
+
+            printResult($result);
+        }
+
         // HANDLE ALL POST ROUTES
 	// A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
         function handlePOSTRequest() {
@@ -230,6 +262,8 @@
             if (connectToDB()) {
                 if (array_key_exists('countTuples', $_GET)) {
                     handleCountRequest();
+                } else if (array_key_exists('showTable', $_GET)) {
+                    handleShowTableRequest();
                 }
 
                 disconnectFromDB();
@@ -238,7 +272,7 @@
 
 		if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
             handlePOSTRequest();
-        } else if (isset($_GET['countTupleRequest'])) {
+        } else if (isset($_GET['countTupleRequest']) || isset($_GET['showTableRequest'])) {
             handleGETRequest();
         }
 		?>

@@ -1,3 +1,4 @@
+/*
 drop table if exists branch cascade;
 drop table if exists vehicleType cascade;
 drop table if exists vehicle cascade;
@@ -7,14 +8,14 @@ drop table if exists rentals cascade;
 drop table if exists creditCard cascade;
 drop table if exists return cascade;
 drop table if exists timePeriod cascade;
-
+*/
 --
 -- Now, add each table.
 --
 
 create table branch (
-	location varchar2(50),
-	city varchar2(20),
+	location varchar2(50) not null,
+	city varchar2(20) not null,
 	primary key(location, city)
 );
 
@@ -40,9 +41,9 @@ create table vehicle(
 	vtname varchar2(20) not null,
 	location varchar2(50) not null,
 	city varchar2(20) not null,
-	foreign key (vtname) references vehicleType(vtname),
-	foreign key (location) references branch(location),
-	foreign key (city) references branch(city)
+	foreign key (vtname) references vehicleType,
+	foreign key (location) references branch,
+	foreign key (city) references branch
 );
 
 create table customer(
@@ -58,16 +59,16 @@ create table reservation(
 	vtname varchar2(20) not null,
 	dlicense varchar2(20) not null,
 	fromdate date not null,
-	fromtime time not null,
+	fromtime time(0) not null,
 	todate date not null,
-	totime time not null,
-	foreign key (rentid) references rentals(rentid),
-	foreign key (vtname) references vehicleType(vtname),
-	foreign key (dlicense) references customer(dlicense),
-	foreign key (fromdate) references timePeriod(fromdate),
-	foreign key (fromtime) references timePeriod(fromtime),
-	foreign key (todate) references timePeriod(todate),
-	foreign key (totime) references timePeriod(totime)
+	totime time(0) not null,
+	foreign key (rentid) references rentals,
+	foreign key (vtname) references vehicleType,
+	foreign key (dlicense) references customer,
+	foreign key (fromdate) references timePeriod,
+	foreign key (fromtime) references timePeriod,
+	foreign key (todate) references timePeriod,
+	foreign key (totime) references timePeriod
 );
 
 create table rentals (
@@ -76,17 +77,17 @@ create table rentals (
 	odometer float not null,
 	vlicense varchar2(20) not null,
 	fromdate date not null,
-	fromtime time not null,
+	fromtime time(0) not null,
 	todate date not null,
-	totime time not null,
+	totime time(0) not null,
 	dlicense varchar2(20) not null,
-	foreign key (cardno) references creditCard(cardno),
-	foreign key (vlicense) references vehicle(vlicense),
-	foreign key (fromdate) references timePeriod(fromdate),
-	foreign key (fromtime) references timePeriod(fromtime),
-	foreign key (todate) references timePeriod(todate),
-	foreign key (totime) references timePeriod(totime),
-	foreign key (dlicense) references customer(dlicense)
+	foreign key (cardno) references creditCard,
+	foreign key (vlicense) references vehicle,
+	foreign key (fromdate) references timePeriod,
+	foreign key (fromtime) references timePeriod,
+	foreign key (todate) references timePeriod,
+	foreign key (totime) references timePeriod,
+	foreign key (dlicense) references customer
 );
 
 create table creditCard (
@@ -98,21 +99,22 @@ create table creditCard (
 create table return (
 	rentid varchar2(20) PRIMARY KEY,
 	date Date not null,
-	time time not null,
+	time time(0) not null,
 	odometer float not null,
 	fulltank varchar2(20) not null,
 	value float not null,
-	foreign key (rentid) references rentals(rentid)
+	foreign key (rentid) references rentals
 );
 
 create table timePeriod (
-	fromdate date,
-	fromtime time,
-	todate date,
-	totime time,
-	primary key (fromdate, formtime, todate, totime)
+	fromdate date not null,
+	fromtime time(0) not null,
+	todate date not null,
+	totime time(0) not null,
+	primary key (fromdate, fromtime, todate, totime)
 );
 
+/*
 insert into branch values('123 Cordova Street', 'Vancouver');
 insert into branch values('435 W. 41st Ave.', 'Vancouver');
 insert into branch values('264 W. 67th Ave.', 'Vancouver');
@@ -174,4 +176,4 @@ insert into timePeriod values(date '2019-11-03', time '09:30', date '2019-11-15'
 insert into timePeriod values(date '2019-11-30', time '10:53', date '2019-12-13', time '16:30');
 insert into timePeriod values(date '2019-11-03', time '10:30', date '2019-11-30', time '16:30');
 
-SET FOREIGN_KEY_CHECKS=1;
+/*SET FOREIGN_KEY_CHECKS=1;
