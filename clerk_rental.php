@@ -33,11 +33,16 @@
 
         <hr />
 
-        <h2>Insert Values into DemoTable</h2>
+        <h2>New Rental</h2>
         <form method="POST" action="clerk_rental.php"> <!--refresh page when submitted-->
             <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
-            Number: <input type="text" name="insNo"> <br /><br />
-            Name: <input type="text" name="insName"> <br /><br />
+            RentID: <input type="text" name="rentid"> <br /><br />
+            Card Number: <input type="text" name="cardno"> <br /><br />
+            Odometer: <input type="text" name="odometer"> <br /><br />
+            License Plate: <input type="text" name="vlicense"> <br /><br />
+            Starting Date: <input type="text" name="fromdt"> <br /><br />
+            Returning Date: <input type="text" name="todt"> <br /><br />
+            Drivers License: <input type="text" name="dlicense"> <br /><br />
 
             <input type="submit" value="Insert" name="insertSubmit"></p>
         </form>
@@ -204,21 +209,26 @@
             executePlainSQL("CREATE TABLE demoTable (id int PRIMARY KEY, name char(30))");
             OCICommit($db_conn);
         }
-
+        // HANDLER FOR INSERT
         function handleInsertRequest() {
             global $db_conn;
 
             //Getting the values from user and insert data into the table
             $tuple = array (
-                ":bind1" => $_POST['insNo'],
-                ":bind2" => $_POST['insName']
+                ":bind1" => $_POST['rentid'],
+                ":bind2" => $_POST['cardno'],
+                ":bind3" => $_POST['odometer'],
+                ":bind4" => $_POST['vlicense'],
+                ":bind5" => $_POST['fromdt'],
+                ":bind6" => $_POST['todt'],
+                ":bind7" => $_POST['dlicense']
             );
 
             $alltuples = array (
                 $tuple
             );
 
-            executeBoundSQL("insert into demoTable values (:bind1, :bind2)", $alltuples);
+            executeBoundSQL("INSERT INTO rental VALUES (:bind1, :bind2, :bind3, :bind4, :bind5, :bind6, :bind7)", $alltuples);
             OCICommit($db_conn);
         }
 
@@ -231,7 +241,8 @@
                 echo "<br> The number of tuples in demoTable: " . $row[0] . "<br>";
             }
         }
-
+        
+        // HANDLER FOR PRINTING
         function handleShowTableRequest() {
             global $db_conn;
 
