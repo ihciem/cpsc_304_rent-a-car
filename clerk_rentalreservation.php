@@ -14,15 +14,9 @@
         <hr />
 
         <form method="POST" action="clerk_rentalreservation.php">
-        Reservation Confirmation Number:
-        <select type="hidden" id="insConfno" name= "insConfno">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            </select>
-            <br /><br />
-            <!--Card Number insert-->
             <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
+            Reservation Confirmation Number: <input type="text" name="confno"> <br /><br />
+            <!--Card Number insert-->
             Card Number: <input type="text" name="cardno"> <br /><br />
             <input type="submit" value="Submit" name="insertSubmit"></p>
         </form>
@@ -114,7 +108,7 @@
         function printResult($result) { //prints results from a select statement
             $header = false;
 
-            echo "<br>Retrieved data from table demoTable:<br>";
+            echo "<br>Generating receipt for '" . $confno . "':<br>";
             echo "<table>";
             while ($row = OCI_Fetch_Array($result, OCI_BOTH)) {
                 $numKeys = array_filter(array_keys($row), function($numKey) {return is_int($numKey);});
@@ -165,26 +159,34 @@
 
             // Finding vehicle from reservation confno
 
-            $confno = $_POST['insConfno'];
+            $confno = $_POST['confno'];
 
             $vlicense = executePlainSQL("SELECT v.vlicense FROM reservation r, vehicle v WHERE r.confno = '" . $confno . "' AND r.vtname = v.vtname");
+            echo "<br> Grabbing vlicense <br>";
             $odometer = executePlainSQL("SELECT odometer FROM vehicle WHERE vlicense = '" . $vlicense . "'");
+            echo "<br> Grabbing odometer <br>";
             executePlainSQL("UPDATE vehicle SET status = 'rented' WHERE vlicense ='" . $vlicense . "'");
+            echo "<br> Updating vehicle status <br>";
 
             $fromdt = executePlainSQL("SELECT fromdt FROM reservation WHERE confno = '" . $confno . "'");
+            echo "<br> Grabbing fromtdt <br>";
             $todt = executePlainSQL("SELECT todt FROM reservation WHERE confno = '" . $confno . "'");
+            echo "<br> Grabbing todt <br>";
             $dlicense = executePlainSQL("SELECT dlicense FROM reservation WHERE confno = '" . $confno . "'");
+            echo "<br> Grabbing dlicense <br>";
 
             //Getting the values from user and insert data into the table
+            $rentIDresGen = $rentIDresGen++;
+
             $tuple = array (
-                ":bind1" => $rentIDresGen++,
+                ":bind1" => '$rentIDresGen',
                 ":bind2" => $_POST['cardno'],
-                ":bind3" => $odometer,
-                ":bind4" => $vlicense,
-                ":bind5" => $fromdt,
-                ":bind6" => $todt,
-                ":bind7" => $dlicense,
-                ":bind8" => $confno
+                ":bind3" => '$odometer',
+                ":bind4" => '$vlicense',
+                ":bind5" => '$fromdt',
+                ":bind6" => '$todt',
+                ":bind7" => '$dlicense',
+                ":bind8" => $_POST['confno']
             );
 
             $alltuples = array (
@@ -192,7 +194,7 @@
             );
 
 
-            executeBoundSQL("INSERT INTO rental VALUES (:bind1, :bind2, :bind3, :bind4, :bind5, :bind6, :bind7, :bind8)", $alltuples);
+            executeBoundSQL("INSERT INTO rental (rentid, cardno, odometer, vlicense, fromdt, todt, dlicense, confno) VALUES (:bind1, :bind2, :bind3, :bind4, :bind5, :bind6, :bind7, :bind8)", $alltuples);
             OCICommit($db_conn);
         }
 
@@ -209,8 +211,9 @@
         // HANDLER FOR PRINTING
         function handleShowTableRequest() {
             global $db_conn;
+            global $rentIDresGen;
 
-            $result = executePlainSQL("SELECT R.rentid, R.fromdt, R.todt, v.vtname FROM rental R, vehicle v WHERE R.vlicense = v.vlicense AND R.rentid = (some input)");
+            $result = executePlainSQL("SELECT R.rentid, R.fromdt, R.todt, v.vtname FROM rental R, vehicle v WHERE R.vlicense = v.vlicense AND R.rentid = '" . $rentIDresGen . "'");
 
             printResult($result);
         }
@@ -219,7 +222,7 @@
 	// A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
         function handlePOSTRequest() {
             if (connectToDB()) {
-                  if (array_key_exists('insertQueryRequest', $_POST) && array_key_exists('insConfno', $_POST)) {
+                  if (array_key_exists('insertQueryRequest', $_POST)) {
                     handleInsertRequest();
                 }
                 disconnectFromDB();

@@ -54,8 +54,8 @@ create table reservation(
 	confno varchar2(50) PRIMARY KEY,
 	vtname varchar2(20) not null,
 	dlicense varchar2(20) not null,
-	fromdt date not null,
-	todt date not null,
+	fromdt timestamp(0) not null,
+	todt timestamp(0) not null,
 	foreign key (vtname) references vehicleType(vtname),
 	foreign key (dlicense) references customer(dlicense)
 );
@@ -65,8 +65,8 @@ create table rental(
 	cardno integer not null,
 	odometer float not null,
 	vlicense varchar2(20) not null,
-	fromdt date not null,
-	todt date not null,
+	fromdt timestamp(0) not null,
+	todt timestamp(0) not null,
 	dlicense varchar2(20) not null,
 	confno varchar2(50),
 	foreign key (confno) references reservation(confno),
@@ -76,10 +76,10 @@ create table rental(
 
 create table return(
 	rentid varchar2(20) PRIMARY KEY,
-	returndt date not null,
+	returndt timestamp(0) not null,
 	odometer float not null,
 	fulltank varchar2(20) not null,
-	cost float not null,
+	value float not null,
 	foreign key (rentid) references rental(rentid)
 );
 --
@@ -121,16 +121,16 @@ insert into customer values('VA23534', 'Helen Smith', '980 Cresent Dr.', 7782459
 insert into customer values('VA92837', 'Paul Krumann', '897 W. 45th Ave.', 7782763495);
 insert into customer values('VA09811', 'Chloe Li', '145 Leona Rd.', 6049872345);
 
-insert into reservation values('RES1234567890', 'Compact', 'VA12345', TO_DATE('2019/11/01 13:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_DATE('2019/11/11 16:30:00', 'YYYY/MM/DD HH24:MI:SS'));
-insert into reservation values('RES4543532454', 'Compact', 'VA14566', TO_DATE('2019/11/30 10:45:00', 'YYYY/MM/DD HH24:MI:SS'), TO_DATE('2019/12/13 16:30:00', 'YYYY/MM/DD HH24:MI:SS'));
-insert into reservation values('RES1456542298', 'Truck', 'VA24553', TO_DATE('2019/11/03 09:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_DATE('2019/11/15 16:30:00', 'YYYY/MM/DD HH24:MI:SS'));
-insert into reservation values('RES4564932499', 'Mid-size', 'VA92837',  TO_DATE('2019/11/30 10:45:00', 'YYYY/MM/DD HH24:MI:SS'), TO_DATE('2019/12/13 16:30:00', 'YYYY/MM/DD HH24:MI:SS'));
-insert into reservation values('RES2358793411', 'SUV', 'VA09811', TO_DATE('2019/11/03 10:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_DATE('2019/11/30 16:30:00', 'YYYY/MM/DD HH24:MI:SS'));
+insert into reservation values('RES1234567890', 'Compact', 'VA12345', TO_TIMESTAMP('2019/11/01 13:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/11/11 16:30:00', 'YYYY/MM/DD HH24:MI:SS'));
+insert into reservation values('RES4543532454', 'Compact', 'VA14566', TO_TIMESTAMP('2019/11/30 10:45:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/12/13 16:30:00', 'YYYY/MM/DD HH24:MI:SS'));
+insert into reservation values('RES1456542298', 'Truck', 'VA24553', TO_TIMESTAMP('2019/11/03 09:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/11/15 16:30:00', 'YYYY/MM/DD HH24:MI:SS'));
+insert into reservation values('RES4564932499', 'Mid-size', 'VA92837',  TO_TIMESTAMP('2019/11/30 10:45:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/12/13 16:30:00', 'YYYY/MM/DD HH24:MI:SS'));
+insert into reservation values('RES2358793411', 'SUV', 'VA09811', TO_TIMESTAMP('2019/11/03 10:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/11/30 16:30:00', 'YYYY/MM/DD HH24:MI:SS'));
 
-insert into rental values('R1234567890', 1234567890123456, 25345, 'HELLOO', TO_DATE('2019/11/01 13:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_DATE('2019/11/11 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 'VA12345', 'RES1234567890');
-insert into rental values('R1456542298', 2334243545623445, 206300, '125ABC', TO_DATE('2019/11/03 09:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_DATE('2019/11/15 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 'VA24553', 'RES1456542298');
-insert into rental values('R4564932499', 1123453343325454, 45344, '456ABD', TO_DATE('2019/11/30 10:45:00', 'YYYY/MM/DD HH24:MI:SS'), TO_DATE('2019/12/13 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 'VA92837', 'RES4564932499');
-insert into rental values('R2358793411', 1234454656344564, 423533, '143ILY', TO_DATE('2019/11/03 10:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_DATE('2019/11/30 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 'VA09811', 'RES2358793411');
+insert into rental values('R1234567890', 1234567890123456, 25345, 'HELLOO', TO_TIMESTAMP('2019/11/01 13:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/11/11 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 'VA12345', 'RES1234567890');
+insert into rental values('R1456542298', 2334243545623445, 206300, '125ABC', TO_TIMESTAMP('2019/11/03 09:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/11/15 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 'VA24553', 'RES1456542298');
+insert into rental values('R4564932499', 1123453343325454, 45344, '456ABD', TO_TIMESTAMP('2019/11/30 10:45:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/12/13 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 'VA92837', 'RES4564932499');
+insert into rental values('R2358793411', 1234454656344564, 423533, '143ILY', TO_TIMESTAMP('2019/11/03 10:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/11/30 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 'VA09811', 'RES2358793411');
 
-insert into return values('R1234567890', TO_DATE('2019/11/11 15:45:22', 'YYYY/MM/DD HH24:MI:SS'), 45345, 'yes', 300);
-insert into return values('R1456542298', TO_DATE('2019/11/15 14:25:46', 'YYYY/MM/DD HH24:MI:SS'), 456300, 'yes', 800);
+insert into return values('R1234567890', TO_TIMESTAMP('2019/11/11 15:45:22', 'YYYY/MM/DD HH24:MI:SS'), 45345, 'yes', 300);
+insert into return values('R1456542298', TO_TIMESTAMP('2019/11/15 14:25:46', 'YYYY/MM/DD HH24:MI:SS'), 456300, 'yes', 800);
