@@ -10,32 +10,30 @@
     </head>
 
     <body>
-        <h2>Find a Reservation Confirmation Number Below</h2>
-        <form method="POST" action="clerk_rentalreservation.php"> 
-        <select>
-            <?php foreach( $results as $row ){
-                echo "<option>" . $row['text column'] . "</option>";
-                }
-            ?> 
-        </select>
-      </form>
+        <h2>Rental With a Prior Reservation</h2>
+        <hr />
 
-      <form method="POST" action="clerk_rentalreservation.php"> <!--Card Number insert-->
-            <input type="hidden" id="updateQueryRequest" name="updateQueryRequest">
-            Card Number: <input type="text" name="oldName"> <br /><br />
-
+        <form method="POST" action="clerk_rentalreservation.php">
+        Reservation Confirmation Number:
+        <select type="hidden" id="insConfno" name= "insConfno">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            </select>
+            <br /><br />
+            <!--Card Number insert-->
+            <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
+            Card Number: <input type="text" name="cardno"> <br /><br />
+            <input type="submit" value="Submit" name="insertSubmit"></p>
         </form>
 
-        <form method="GET" action="clerk_rentalreservation.php"> <!--Submit-->
-            <input type="hidden" id="countTupleRequest" name="countTupleRequest">
-            <input type="submit" value="Submit" name="updateSubmit"></p>
-        </form>
+        <hr />
 
         <form method="GET" action="clerk_rentalreservation.php"> <!--Generate Receipt-->
             <input type="hidden" id="showTableRequest" name="showTableRequest">
-            <input type="submit" value="Receipt" name="showTable"></p>
+            <input type="submit" value="Generate Receipt" name="showTable"></p>
         </form>
-    
+
       <?php
 		//this tells the system that it's no longer just parsing html; it's now parsing PHP ------------------------- END OF HTML ----------------------------
         include 'connectToDB.php';
@@ -75,17 +73,17 @@
                 $success = False;
             }
 
-			return $statement;
-		}
+  		return $statement;
+  	}
 
         function executeBoundSQL($cmdstr, $list) {
             /* Sometimes the same statement will be executed several times with different values for the variables involved in the query.
-		In this case you don't need to create the statement several times. Bound variables cause a statement to only be
-		parsed once and you can reuse the statement. This is also very useful in protecting against SQL injection.
-		See the sample code below for how this function is used */
+  	In this case you don't need to create the statement several times. Bound variables cause a statement to only be
+  	parsed once and you can reuse the statement. This is also very useful in protecting against SQL injection.
+  	See the sample code below for how this function is used */
 
-			global $db_conn, $success;
-			$statement = OCIParse($db_conn, $cmdstr);
+  		global $db_conn, $success;
+  		$statement = OCIParse($db_conn, $cmdstr);
 
             if (!$statement) {
                 echo "<br>Cannot parse the following command: " . $cmdstr . "<br>";
@@ -100,7 +98,7 @@
                     //echo "<br>".$bind."<br>";
                     OCIBindByName($statement, $bind, $val);
                     unset ($val); //make sure you do not remove this. Otherwise $val will remain in an array object wrapper which will not be recognized by Oracle as a proper datatype
-				}
+  			}
 
                 $r = OCIExecute($statement, OCI_DEFAULT);
                 if (!$r) {
@@ -160,36 +158,41 @@
             OCICommit($db_conn);
         }
 
-        function handleResetRequest() {
-            global $db_conn;
-            // Drop old table
-            executePlainSQL("DROP TABLE demoTable");
-
-            // Create new table
-            echo "<br> creating new table <br>";
-            executePlainSQL("CREATE TABLE demoTable (id int PRIMARY KEY, name char(30))");
-            OCICommit($db_conn);
-        }
         // HANDLER FOR INSERT
         function handleInsertRequest() {
             global $db_conn;
+            global $rentIDresGen;
+
+            // Finding vehicle from reservation confno
+
+            $confno = $_POST['insConfno'];
+
+            $vlicense = executePlainSQL("SELECT v.vlicense FROM reservation r, vehicle v WHERE r.confno = '" . $confno . "' AND r.vtname = v.vtname");
+            $odometer = executePlainSQL("SELECT odometer FROM vehicle WHERE vlicense = '" . $vlicense . "'");
+            executePlainSQL("UPDATE vehicle SET status = 'rented' WHERE vlicense ='" . $vlicense . "'");
+
+            $fromdt = executePlainSQL("SELECT fromdt FROM reservation WHERE confno = '" . $confno . "'");
+            $todt = executePlainSQL("SELECT todt FROM reservation WHERE confno = '" . $confno . "'");
+            $dlicense = executePlainSQL("SELECT dlicense FROM reservation WHERE confno = '" . $confno . "'");
 
             //Getting the values from user and insert data into the table
             $tuple = array (
-                ":bind1" => $_POST['rentid'],
+                ":bind1" => $rentIDresGen++,
                 ":bind2" => $_POST['cardno'],
-                ":bind3" => $_POST['odometer'],
-                ":bind4" => $_POST['vlicense'],
-                ":bind5" => $_POST['fromdt'],
-                ":bind6" => $_POST['todt'],
-                ":bind7" => $_POST['dlicense']
+                ":bind3" => $odometer,
+                ":bind4" => $vlicense,
+                ":bind5" => $fromdt,
+                ":bind6" => $todt,
+                ":bind7" => $dlicense,
+                ":bind8" => $confno
             );
 
             $alltuples = array (
                 $tuple
             );
 
-            executeBoundSQL("INSERT INTO rental VALUES (:bind1, :bind2, :bind3, :bind4, :bind5, :bind6, :bind7)", $alltuples);
+
+            executeBoundSQL("INSERT INTO rental VALUES (:bind1, :bind2, :bind3, :bind4, :bind5, :bind6, :bind7, :bind8)", $alltuples);
             OCICommit($db_conn);
         }
 
@@ -202,7 +205,7 @@
                 echo "<br> The number of tuples in demoTable: " . $row[0] . "<br>";
             }
         }
-        
+
         // HANDLER FOR PRINTING
         function handleShowTableRequest() {
             global $db_conn;
@@ -216,14 +219,9 @@
 	// A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
         function handlePOSTRequest() {
             if (connectToDB()) {
-                if (array_key_exists('resetTablesRequest', $_POST)) {
-                    handleResetRequest();
-                } else if (array_key_exists('updateQueryRequest', $_POST)) {
-                    handleUpdateRequest();
-                } else if (array_key_exists('insertQueryRequest', $_POST)) {
+                  if (array_key_exists('insertQueryRequest', $_POST) && array_key_exists('insConfno', $_POST)) {
                     handleInsertRequest();
                 }
-
                 disconnectFromDB();
             }
         }
@@ -242,12 +240,12 @@
             }
         }
 
-		if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
+		if (isset($_POST['insertSubmit'])) {
             handlePOSTRequest();
         } else if (isset($_GET['countTupleRequest']) || isset($_GET['showTableRequest'])) {
             handleGETRequest();
         }
 		?>
 	</body>
-    
+
 </html>
