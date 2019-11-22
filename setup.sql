@@ -79,7 +79,7 @@ create table return(
 	returndt date not null,
 	odometer float not null,
 	fulltank varchar2(20) not null,
-	value float not null,
+	cost float not null,
 	foreign key (rentid) references rental(rentid)
 );
 --
