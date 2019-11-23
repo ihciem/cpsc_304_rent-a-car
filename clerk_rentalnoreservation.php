@@ -16,7 +16,7 @@
   extension.  You must also change the username and password on the
   OCILogon below to be your ORACLE username and password -->
 
-<html>
+  <html>
     <head>
       <!-- Required meta tags -->
       <meta charset="utf-8">
@@ -28,6 +28,26 @@
     </head>
 
     <body>
+        <h2>New Rental</h2>
+        <hr />
+        <form method="POST" action="clerk_rentalnoreservation.php"> <!--refresh page when submitted-->
+            <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
+            Vehicle Type <input type="text" name="insvtname"> <br /><br />
+            Card Number: <input type="text" name="inscardno"> <br /><br />
+            Starting Date: <input type="datetime-local" name="insfromdt"> <br /><br />
+            Returning Date: <input type="datetime-local" name="instodt"> <br /><br />
+            Drivers License: <input type="text" name="insdlicense"> <br /><br />
+
+            <input type="submit" value="Submit" name="insertSubmit"></p>
+        </form>
+
+        <hr />
+
+        <form method="GET" action="clerk_rentalnoreservation.php"> <!--Generate Receipt-->
+            <input type="hidden" id="showTableRequest" name="showTableRequest">
+            <input type="submit" value="Generate Receipt" name="showTable"></p>
+        </form>
+
         <?php
 		//this tells the system that it's no longer just parsing html; it's now parsing PHP ------------------------- END OF HTML ----------------------------
         include 'connectToDB.php';
@@ -35,6 +55,7 @@
         $success = True; //keep track of errors so it redirects the page only if there are no errors
         $db_conn = NULL; // edit the login credentials in connectToDB()
         $show_debug_alert_messages = False; // set to True if you want alerts to show you which methods are being triggered (see how it is used in debugAlertMessage())
+        $rentIDresGen = 500;
 
         function debugAlertMessage($message) {
             global $show_debug_alert_messages;
@@ -107,7 +128,6 @@
         function printResult($result) { //prints results from a select statement
             $header = false;
 
-            echo "<br>Retrieved data from table demoTable:<br>";
             echo "<table>";
             while ($row = OCI_Fetch_Array($result, OCI_BOTH)) {
                 $numKeys = array_filter(array_keys($row), function($numKey) {return is_int($numKey);});
@@ -157,65 +177,52 @@
             executePlainSQL("DROP TABLE demoTable");
 
             // Create new table
+            echo "<br> creating new table <br>";
             executePlainSQL("CREATE TABLE demoTable (id int PRIMARY KEY, name char(30))");
             OCICommit($db_conn);
         }
-
+        // HANDLER FOR INSERT
         function handleInsertRequest() {
             global $db_conn;
-           
+            global $rentIDresGen;
 
+            // Find an available car
+            $vt_name = $_POST['insvtname'];
+
+            $vlicense = executePlainSQL("SELECT v.vlicense From vehicle v WHERE v.vtname = '" . $vt_name . "' AND v.status = 'available' AND ROWNUM <= 1");
+            if (($row = oci_fetch_row($vlicense)) != false) {
+                echo "<br> Grabbing vlicense: . $row[0] . <br>";
+            }
+            $odometer = executePlainSQL("SELECT odometer FROM vehicle WHERE vlicense = '" . $vlicense . "'");
+            if (($row = oci_fetch_row($odometer)) != false) {
+                echo "<br> Grabbing odometer: . $row[0] . <br>";
+            }
+            executePlainSQL("UPDATE vehicle SET status = 'rented' WHERE vlicense ='" . $vlicense . "'");
+            echo "<br> Updating vehicle status <br>";
+
+            $rentIDresGen = $rentIDresGen++;
+            $rentIDString = strval($rentIDresGen);
+            $confno = '1';
+
+            echo $confno;
             //Getting the values from user and insert data into the table
-        
-
-            //Calculating Total Cost
-            $rent_id = $_POST['rental'];
-            $from_dt = executePlainSQL("SELECT fromdt FROM Rental WHERE rentid='" . $rent_id . "'");
-            $to_dt = executePlainSQL("SELECT todt FROM Rental WHERE rentid='" . $rent_id . "'");
-
-            // converting timestamp to DateTime objects
-            $from_dtDT = new DateTime("@" . $from_dt);
-            $to_dtDT = new DateTime("@" . $to_dt);
-
-            // finding difference between DateTime objects
-            $interval = $from_dtDT->diff($to_dtDT);
-            $difference = $interval->format("%a");
-
-            //Finding specific rates for the returned vehicle
-            $w_rate = executePlainSQL("SELECT vt.wrate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
-            $d_rate = executePlainSQL("SELECT vt.drate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
-            $wi_rate = executePlainSQL("SELECT vt.wirate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
-            $di_rate = executePlainSQL("SELECT vt.dirate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
-
-            //Calculating cost in weeks and days
-            $weeks = floor($difference / 7);
-            $days = $difference - ($weeks*7);
-
-            $cost = ($weeks*$w_rate + $weeks*$wi_rate) + ($days*$d_rate + $days*$di_rate);
-            $driverate = ($weeks*$w_rate + $days*$d_rate);
-            $insurrate = ($weeks*$wi_rate + $days*$di_rate);
-                        
             $tuple = array (
-                ":bind1" => $_POST['rental'],
-                ":bind2" => $_POST['insreturndt'],
-                ":bind3" => $_POST['insodometer'], 
-                ":bind4" => $_POST['insfulltank'],
-                ":bind5" => $cost
+                ":bind1" => $rentIDString,
+                ":bind2" => $_POST['inscardno'],
+                ":bind3" => $odometer,
+                ":bind4" => $vlicense,
+                ":bind5" => $_POST['insfromdt'],
+                ":bind6" => $_POST['instodt'],
+                ":bind7" => $_POST['insdlicense'],
+                ":bind8" => $confno
             );
 
             $alltuples = array (
                 $tuple
             );
 
-            executeBoundSQL("insert into return values (:bind1, :bind2, :bind3, :bind4, :bind5)", $alltuples);
+            executeBoundSQL("INSERT INTO rental VALUES (:bind1, :bind2, :bind3, :bind4, :bind5, :bind6, :bind7, :bind8)", $alltuples);
             OCICommit($db_conn);
-
-            // Show cost breakdown
-            if ($row = OCI_Fetch_Array($cost, OCI_BOTH)) {
-                echo "<br>Total Cost Breakdown: ". $row[0]. "<br>";
-                echo "<br> Driving Costs: " . $driverate . "<br>";
-                echo "<br> Insurance Costs: " . $insurrate . "<br>";
-            }
         }
 
         function handleCountRequest() {
@@ -226,6 +233,17 @@
             if (($row = oci_fetch_row($result)) != false) {
                 echo "<br> The number of tuples in demoTable: " . $row[0] . "<br>";
             }
+        }
+        
+        // HANDLER FOR PRINTING
+        function handleShowTableRequest() {
+            global $db_conn;
+            global $rentIDresGen;
+            $rentIDString = strval($rentIDresGen);
+
+            $result = executePlainSQL("SELECT R.rentid, R.fromdt, R.todt, v.vtname FROM rental R, vehicle v WHERE R.vlicense = v.vlicense AND R.rentid = '" . $rentIDString . "'");
+
+            printResult($result);
         }
 
         // HANDLE ALL POST ROUTES
@@ -258,47 +276,11 @@
             }
         }
 
-		?>
-        
-        <h2>Returns</h2>
-        <hr />
-
-        <form method="POST" action="clerk_return.php">
-            <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
-            Rental ID: 
-                <?php
-                    
-                    connectToDB();
-                    $rentals = executePlainSQL("SELECT rentid FROM rental");
-                    echo  '<select name="rental"  multiple="no">';
-
-                    while ($row = OCI_Fetch_Array($rentals, OCI_RETURN_NULLS+OCI_ASSOC))
-                    {
-                        echo "<option value=\"". $row['RENTID'] . "\">" . $row['RENTID'] . "</option>";
-                    }
-                    echo '</select>';
-                  ?>
-                <br><br/>
-
-            Return Date: <input type="datetime-local" name="insreturndt"> <br /><br />
-            Odometer: <input type="text" name="insodometer"> <br /><br />
-            Tank Level: <input type="text" name="insfulltank"> <br /><br />
-            <input type="submit" value="Submit" name="insertSubmit"></p>
-        </form>
-
-        <hr />
-
-        <form method="GET" action="clerk_return.php"> <!--Generate Receipt-->
-            <input type="hidden" id="showTableRequest" name="showTableRequest">
-            <input type="submit" value="Generate Receipt" name="showTable"></p>
-        </form>
-        
-        <?php
-        if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
+		if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
             handlePOSTRequest();
         } else if (isset($_GET['countTupleRequest']) || isset($_GET['showTableRequest'])) {
             handleGETRequest();
         }
-        ?>
-    </body>
+		?>
+	</body>
 </html>

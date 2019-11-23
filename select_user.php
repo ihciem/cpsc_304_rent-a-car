@@ -29,15 +29,17 @@
     </head>
 
     <body>
-      <div class="container-fluid">
-        <div class="row">
-          <div class="col">
-            <p><a href="customer_search.php">I am a Customer</a></p>
-          </div>
-          <div class="col">
-            <p><a href="clerk_actions.php">I am a Clerk</a></p>
-          </div>
-        </div>
-      </div>
+    <h2>Welcome to SuperRent!</h2>
+    <hr />
+    <form action="customer_search.php">
+          <!-- if you want another page to load after the button is clicked, you have to specify that page in the action parameter -->
+
+          <p><input type="submit" value="I am a Customer"></p>
+      </form>
+      <form action="clerk_actions.php">
+          <!-- if you want another page to load after the button is clicked, you have to specify that page in the action parameter -->
+          
+          <p><input type="submit" value="I am a Clerk"></p>
+      </form>
 	</body>
 </html>
