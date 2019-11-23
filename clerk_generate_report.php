@@ -155,7 +155,7 @@
           printResult($noPerCategory);
 
           // number of rentals at each branch
-          $noPerBranch = executePlainSQL("SELECT v.location, v.city, COUNT(*) FROM rentalsToday rT, vehicle v WHERE rT.vlicense = v.vlicense GROUP BY v.location, v.city");
+          $noPerBranch = executePlainSQL("SELECT v.city, v.location, COUNT(*) FROM rentalsToday rT, vehicle v WHERE rT.vlicense = v.vlicense GROUP BY v.city, v.location");
           if ($branchSelected) {
             // number of rentals at each branch
             if ($row = OCI_Fetch_Array($noPerBranch, OCI_BOTH)) {
@@ -187,11 +187,9 @@
         $branchSelected = false;
         echo "<b><u>$date</u></b></b>" .strtoupper("<b><u> Daily Rentals Report</u></b><br>");
 
-
         if ($_GET['branch']=="all") {
           echo strtoupper("<b>for all branches</b>");
           echo strtoupper("<br></br><br><b><u>Summary of results</u></b><br>");
-
           executePlainSQL("CREATE OR REPLACE VIEW returnsToday AS SELECT * FROM return where to_char(cast(return.returndt as date), 'YYYY/MM/DD')='$date'");
 
         } else {
@@ -212,12 +210,12 @@
         printResult($noPerCategory);
 
         // subtotals for the number of vehicles and revenue per branch;
-        $subTotals = executePlainSQL("SELECT v.location, v.city, COUNT(*), SUM(rT.value) FROM returnsToday rT, rental rent, vehicle v WHERE rT.rentid = rent.rentid AND rent.vlicense = v.vlicense GROUP BY v.location, v.city");
+        $subTotals = executePlainSQL("SELECT v.city, v.location, COUNT(*), SUM(rT.value) FROM returnsToday rT, rental rent, vehicle v WHERE rT.rentid = rent.rentid AND rent.vlicense = v.vlicense GROUP BY v.city, v.location ORDER BY v.city, v.location");
         if ($branchSelected) {
           if ($row = OCI_Fetch_Array($subTotals, OCI_BOTH)) {
             echo "<br>Branch Subtotal Today: ". $row[3]. "<br>";
           } else {
-            echo "<br>Branch Subtotal Today: N/A<br>";
+            echo "<br>Branch Subtotal Today: 0</br>";
           }
         } else {
           echo "<br>Subtotals Per Branch<br>";
