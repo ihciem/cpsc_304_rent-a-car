@@ -213,8 +213,12 @@
             // Show cost breakdown
             if ($row = OCI_Fetch_Array($cost, OCI_BOTH)) {
                 echo "<br>Total Cost Breakdown: ". $row[0]. "<br>";
-                echo "<br> Driving Costs: " . $driverate . "<br>";
-                echo "<br> Insurance Costs: " . $insurrate . "<br>";
+            }
+            if ($row = OCI_Fetch_Array($driverate, OCI_BOTH)) {
+                echo "<br> Driving Costs: " . $row[0] . "<br>";
+            }
+            if ($row = OCI_Fetch_Array($insurrate, OCI_BOTH)) {
+                echo "<br> Insurance Costs: " . $row[0] . "<br>";
             }
         }
 
@@ -226,6 +230,15 @@
             if (($row = oci_fetch_row($result)) != false) {
                 echo "<br> The number of tuples in demoTable: " . $row[0] . "<br>";
             }
+        }
+
+        // HANDLER FOR PRINTING
+        function handleShowTableRequest() {
+            global $db_conn;
+
+            $result = executePlainSQL("SELECT rentid, returndt, value FROM return WHERE rentid = '" . $rent_id . "'");
+
+            printResult($result);
         }
 
         // HANDLE ALL POST ROUTES

@@ -200,16 +200,13 @@
         function handleShowTableRequest() {
             global $db_conn;
             global $rentIDresGen;
+            $rentIDString = strval($rentIDresGen);
 
-            $result = executePlainSQL("SELECT R.rentid, R.fromdt, R.todt, v.vtname FROM rental R, vehicle v WHERE R.vlicense = v.vlicense AND R.rentid = '" . $rentIDresGen . "'");
+            $result = executePlainSQL("SELECT R.rentid, R.fromdt, R.todt, v.vtname FROM rental R, vehicle v WHERE R.vlicense = v.vlicense AND R.rentid = '" . $rentIDString . "'");
 
             printResult($result);
 
-            $count = executePlainSQL("SELECT Count(*) FROM reservation");
-
-            if (($row = oci_fetch_row($count)) != false) {
-                echo "<br> The number of tuples in demoTable: " . $row[0] . "<br>";
-            }
+            
         }
 
         // HANDLE ALL POST ROUTES
