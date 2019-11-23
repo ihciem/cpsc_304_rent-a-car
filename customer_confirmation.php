@@ -66,6 +66,7 @@
         <?php
 		//this tells the system that it's no longer just parsing html; it's now parsing PHP
         include 'connectToDB.php';
+        include 'printResult.php';
 
         $success = True; //keep track of errors so it redirects the page only if there are no errors
         $db_conn = NULL; // edit the login credentials in connectToDB()
@@ -137,25 +138,6 @@
                     $success = False;
                 }
             }
-        }
-
-        function printResult($result) { //prints results from a select statement
-            echo "<br>Retrieved data from table demoTable:<br>";
-            echo "<table>";
-            echo "<tr><th>ID</th><th>Name</th></tr>";
-
-            while ($row = OCI_Fetch_Array($result, OCI_BOTH)) {
-                echo "<tr><td>" . $row["NID"] . "</td><td>" . $row["NAME"] . "</td></tr>"; //or just use "echo $row[0]"
-            }
-
-            echo "</table>";
-        }
-
-        function disconnectFromDB() {
-            global $db_conn;
-
-            debugAlertMessage("Disconnect from Database");
-            OCILogoff($db_conn);
         }
 
         function handleUpdateRequest() {

@@ -18,3 +18,9 @@ function connectToDB() {
         return false;
     }
 }
+
+function disconnectFromDB() {
+    global $db_conn;
+    debugAlertMessage("Disconnect from Database");
+    OCILogoff($db_conn);
+}

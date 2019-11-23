@@ -12,6 +12,7 @@
     <body>
       <?php //this tells the system that it's no longer just parsing html; it's now parsing PHP
       include 'connectToDB.php';
+      include 'printResult.php';
 
       $success = True; //keep track of errors so it redirects the page only if there are no errors
       $db_conn = NULL; // edit the login credentials in connectToDB()
@@ -87,32 +88,7 @@
           }
       }
 
-    function printResult($result) { //prints results from a select statement
-        $header = false;
-        echo "<table>";
-        while ($row = OCI_Fetch_Array($result, OCI_BOTH)) {
-            $numKeys = array_filter(array_keys($row), function($numKey) {return is_int($numKey);});
-            $assocKeys = array_filter(array_keys($row), function($assocKey) {return is_string($assocKey);});
-            // output header/column/attribute names
-            if (!$header) {
-                echo "<thead><tr>";
-                foreach ($assocKeys as $key) {
-                    echo '<th>' . ($key !== null ? htmlentities($key, ENT_QUOTES) : '') . str_repeat("&nbsp;", 5) . '</th>';
-                }
-                echo "</tr></thead>";
-                $header = true;
-            }
-            // output all the data rows.
-            echo '<tr>';
-            foreach ($numKeys as $index) {
-                echo "<td>" . $row[$index] . str_repeat("&nbsp;", 5) . "</td>";
-            }
-            echo '</tr>';
-        }
-        echo "</table>";
-    }
-
-      function printRentals() { //prints results from a select statement
+      function generateRentalReport() { //prints results from a select statement
           global $date;
           $branchSelected = false;
           echo "<b><u>$date</u></b></b>" .strtoupper("<b><u> Daily Rentals Report</u></b><br>");
@@ -169,7 +145,7 @@
           printResult($result);
       }
 
-      function printReturns() { //prints results from a select statement
+      function generateReturnReport() { //prints results from a select statement
         global $date;
         $branchSelected = false;
         echo "<b><u>$date</u></b></b>" .strtoupper("<b><u> Daily Rentals Report</u></b><br>");
@@ -220,11 +196,7 @@
         echo "<br>Retrieved vehicle data:<br>";
         printResult($result);
       }
-      function disconnectFromDB() {
-          global $db_conn;
-          debugAlertMessage("Disconnect from Database");
-          OCILogoff($db_conn);
-      }
+
       function handleUpdateRequest() {
           global $db_conn;
           $old_name = $_POST['oldName'];
@@ -262,10 +234,10 @@
           echo "<br></br>";
           if (isset($_GET['reportType']) && $_GET['reportType']=="rentals") {
             $rentals_status = 'checked';
-            printRentals();
+            generateRentalReport();
           } else if (isset($_GET['reportType']) && $_GET['reportType']=="returns") {
             $returns_status = 'checked';
-            printReturns();
+            generateReturnReport();
           }
       }
       function handleCountRequest() {
