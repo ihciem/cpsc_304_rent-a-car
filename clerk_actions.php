@@ -29,21 +29,22 @@
     </head>
 
     <body>
-      <h2>Welcome to work!</h2>
+      <h2>Welcome back to work!</h2>
+      <hr />
       <form method="POST" action="clerk_rental.php">
           <!-- if you want another page to load after the button is clicked, you have to specify that page in the action parameter -->
           <input type="hidden" id="resetTablesRequest" name="resetTablesRequest">
-          <p><input type="submit" value="Rent Vehicle" name="reset"></p>
+          <p><input type="submit" value="Rent a Vehicle" name="reset"></p>
       </form>
       <form method="POST" action="clerk_return.php">
           <!-- if you want another page to load after the button is clicked, you have to specify that page in the action parameter -->
           <input type="hidden" id="resetTablesRequest" name="resetTablesRequest">
-          <p><input type="submit" value="Return Rental Vehicle" name="reset"></p>
+          <p><input type="submit" value="Return a Vehicle" name="reset"></p>
       </form>
       <form method="POST" action="clerk_generate_report.php">
           <!-- if you want another page to load after the button is clicked, you have to specify that page in the action parameter -->
           <input type="hidden" id="resetTablesRequest" name="resetTablesRequest">
-          <p><input type="submit" value="Generate Report" name="reset"></p>
+          <p><input type="submit" value="Generate Reports" name="reset"></p>
       </form>
       <form method="GET" action="clerk_actions.php"> <!--refresh page when submitted-->
           <input type="hidden" id="showTableRequest" name="showTableRequest">
@@ -129,7 +130,6 @@
       function printResult($result) { //prints results from a select statement
           $header = false;
 
-          echo "<br>Retrieved data from table demoTable:<br>";
           echo "<table>";
           while ($row = OCI_Fetch_Array($result, OCI_BOTH)) {
               $numKeys = array_filter(array_keys($row), function($numKey) {return is_int($numKey);});
@@ -165,9 +165,14 @@
       function handleShowTableRequest() {
           global $db_conn;
 
-          $result = executePlainSQL("SELECT * FROM demoTable");
+          $result1 = executePlainSQL("SELECT * FROM reservation");
+          $result2 = executePlainSQL("SELECT * FROM return");
 
-          printResult($result);
+          echo "<br> Reservation";
+          printResult($result1);
+
+          echo "<br> Return";
+          printResult($result2);
       }
 
       // HANDLE ALL POST ROUTES

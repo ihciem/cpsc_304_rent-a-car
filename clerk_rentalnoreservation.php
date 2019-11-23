@@ -18,62 +18,34 @@
 
   <html>
     <head>
-        <title>CPSC 304 PHP/Oracle Demonstration</title>
+      <!-- Required meta tags -->
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+
+      <!-- Bootstrap CSS -->
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
     </head>
 
     <body>
-        <h2>Reset</h2>
-        <p>If you wish to reset the table press on the reset button. If this is the first time you're running this page, you MUST use reset</p>
-
-        <form method="POST" action="clerk_rental.php">
-            <!-- if you want another page to load after the button is clicked, you have to specify that page in the action parameter -->
-            <input type="hidden" id="resetTablesRequest" name="resetTablesRequest">
-            <p><input type="submit" value="Reset" name="reset"></p>
-        </form>
-
-        <hr />
-
         <h2>New Rental</h2>
-        <form method="POST" action="clerk_rental.php"> <!--refresh page when submitted-->
+        <hr />
+        <form method="POST" action="clerk_rentalnoreservation.php"> <!--refresh page when submitted-->
             <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
-            RentID: <input type="text" name="rentid"> <br /><br />
-            Card Number: <input type="text" name="cardno"> <br /><br />
-            Odometer: <input type="text" name="odometer"> <br /><br />
-            License Plate: <input type="text" name="vlicense"> <br /><br />
-            Starting Date: <input type="text" name="fromdt"> <br /><br />
-            Returning Date: <input type="text" name="todt"> <br /><br />
-            Drivers License: <input type="text" name="dlicense"> <br /><br />
+            Vehicle Type <input type="text" name="insvtname"> <br /><br />
+            Card Number: <input type="text" name="inscardno"> <br /><br />
+            Starting Date: <input type="datetime-local" name="insfromdt"> <br /><br />
+            Returning Date: <input type="datetime-local" name="instodt"> <br /><br />
+            Drivers License: <input type="text" name="insdlicense"> <br /><br />
 
-            <input type="submit" value="Insert" name="insertSubmit"></p>
+            <input type="submit" value="Submit" name="insertSubmit"></p>
         </form>
 
         <hr />
 
-        <h2>Update Name in DemoTable</h2>
-        <p>The values are case sensitive and if you enter in the wrong case, the update statement will not do anything.</p>
-
-        <form method="POST" action="clerk_rental.php"> <!--refresh page when submitted-->
-            <input type="hidden" id="updateQueryRequest" name="updateQueryRequest">
-            Old Name: <input type="text" name="oldName"> <br /><br />
-            New Name: <input type="text" name="newName"> <br /><br />
-
-            <input type="submit" value="Update" name="updateSubmit"></p>
-        </form>
-
-        <hr />
-
-        <h2>Count the Tuples in DemoTable</h2>
-        <form method="GET" action="clerk_rental.php"> <!--refresh page when submitted-->
-            <input type="hidden" id="countTupleRequest" name="countTupleRequest">
-            <input type="submit" name="countTuples"></p>
-        </form>
-
-        <hr />
-
-        <h2>Receipt</h2>
-        <form method="GET" action="clerk_rental.php"> <!--refresh page when submitted-->
+        <form method="GET" action="clerk_rentalnoreservation.php"> <!--Generate Receipt-->
             <input type="hidden" id="showTableRequest" name="showTableRequest">
-            <input type="submit" name="showTable"></p>
+            <input type="submit" value="Generate Receipt" name="showTable"></p>
         </form>
 
         <?php
@@ -83,6 +55,7 @@
         $success = True; //keep track of errors so it redirects the page only if there are no errors
         $db_conn = NULL; // edit the login credentials in connectToDB()
         $show_debug_alert_messages = False; // set to True if you want alerts to show you which methods are being triggered (see how it is used in debugAlertMessage())
+        $rentIDresGen = 500;
 
         function debugAlertMessage($message) {
             global $show_debug_alert_messages;
@@ -155,7 +128,6 @@
         function printResult($result) { //prints results from a select statement
             $header = false;
 
-            echo "<br>Retrieved data from table demoTable:<br>";
             echo "<table>";
             while ($row = OCI_Fetch_Array($result, OCI_BOTH)) {
                 $numKeys = array_filter(array_keys($row), function($numKey) {return is_int($numKey);});
@@ -212,23 +184,44 @@
         // HANDLER FOR INSERT
         function handleInsertRequest() {
             global $db_conn;
+            global $rentIDresGen;
 
+            // Find an available car
+            $vt_name = $_POST['insvtname'];
+
+            $vlicense = executePlainSQL("SELECT v.vlicense From vehicle v WHERE v.vtname = '" . $vt_name . "' AND v.status = 'available' AND ROWNUM <= 1");
+            if (($row = oci_fetch_row($vlicense)) != false) {
+                echo "<br> Grabbing vlicense: . $row[0] . <br>";
+            }
+            $odometer = executePlainSQL("SELECT odometer FROM vehicle WHERE vlicense = '" . $vlicense . "'");
+            if (($row = oci_fetch_row($odometer)) != false) {
+                echo "<br> Grabbing odometer: . $row[0] . <br>";
+            }
+            executePlainSQL("UPDATE vehicle SET status = 'rented' WHERE vlicense ='" . $vlicense . "'");
+            echo "<br> Updating vehicle status <br>";
+
+            $rentIDresGen = $rentIDresGen++;
+            $rentIDString = strval($rentIDresGen);
+            $confno = '1';
+
+            echo $confno;
             //Getting the values from user and insert data into the table
             $tuple = array (
-                ":bind1" => $_POST['rentid'],
-                ":bind2" => $_POST['cardno'],
-                ":bind3" => $_POST['odometer'],
-                ":bind4" => $_POST['vlicense'],
-                ":bind5" => $_POST['fromdt'],
-                ":bind6" => $_POST['todt'],
-                ":bind7" => $_POST['dlicense']
+                ":bind1" => $rentIDString,
+                ":bind2" => $_POST['inscardno'],
+                ":bind3" => $odometer,
+                ":bind4" => $vlicense,
+                ":bind5" => $_POST['insfromdt'],
+                ":bind6" => $_POST['instodt'],
+                ":bind7" => $_POST['insdlicense'],
+                ":bind8" => $confno
             );
 
             $alltuples = array (
                 $tuple
             );
 
-            executeBoundSQL("INSERT INTO rental VALUES (:bind1, :bind2, :bind3, :bind4, :bind5, :bind6, :bind7)", $alltuples);
+            executeBoundSQL("INSERT INTO rental VALUES (:bind1, :bind2, :bind3, :bind4, :bind5, :bind6, :bind7, :bind8)", $alltuples);
             OCICommit($db_conn);
         }
 
@@ -245,8 +238,10 @@
         // HANDLER FOR PRINTING
         function handleShowTableRequest() {
             global $db_conn;
+            global $rentIDresGen;
+            $rentIDString = strval($rentIDresGen);
 
-            $result = executePlainSQL("SELECT R.rentid, R.fromdt, R.todt, v.vtname FROM rental R, vehicle v WHERE R.vlicense = v.vlicense AND R.rentid = (some input)");
+            $result = executePlainSQL("SELECT R.rentid, R.fromdt, R.todt, v.vtname FROM rental R, vehicle v WHERE R.vlicense = v.vlicense AND R.rentid = '" . $rentIDString . "'");
 
             printResult($result);
         }

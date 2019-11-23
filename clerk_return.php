@@ -18,51 +18,16 @@
 
 <html>
     <head>
-        <title>CPSC 304 PHP/Oracle Demonstration</title>
+      <!-- Required meta tags -->
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+
+      <!-- Bootstrap CSS -->
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
     </head>
 
     <body>
-        <h2>Reset</h2>
-        <p>If you wish to reset the table press on the reset button. If this is the first time you're running this page, you MUST use reset</p>
-
-        <form method="POST" action="clerk_return.php">
-            <!-- if you want another page to load after the button is clicked, you have to specify that page in the action parameter -->
-            <input type="hidden" id="resetTablesRequest" name="resetTablesRequest">
-            <p><input type="submit" value="Reset" name="reset"></p>
-        </form>
-
-        <hr />
-
-        <h2>Insert Values into DemoTable</h2>
-        <form method="POST" action="clerk_return.php"> <!--refresh page when submitted-->
-            <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
-            Number: <input type="text" name="insNo"> <br /><br />
-            Name: <input type="text" name="insName"> <br /><br />
-
-            <input type="submit" value="Insert" name="insertSubmit"></p>
-        </form>
-
-        <hr />
-
-        <h2>Update Name in DemoTable</h2>
-        <p>The values are case sensitive and if you enter in the wrong case, the update statement will not do anything.</p>
-
-        <form method="POST" action="clerk_return.php"> <!--refresh page when submitted-->
-            <input type="hidden" id="updateQueryRequest" name="updateQueryRequest">
-            Old Name: <input type="text" name="oldName"> <br /><br />
-            New Name: <input type="text" name="newName"> <br /><br />
-
-            <input type="submit" value="Update" name="updateSubmit"></p>
-        </form>
-
-        <hr />
-
-        <h2>Count the Tuples in DemoTable</h2>
-        <form method="GET" action="clerk_return.php"> <!--refresh page when submitted-->
-            <input type="hidden" id="countTupleRequest" name="countTupleRequest">
-            <input type="submit" name="countTuples"></p>
-        </form>
-
         <?php
 		//this tells the system that it's no longer just parsing html; it's now parsing PHP ------------------------- END OF HTML ----------------------------
         include 'connectToDB.php';
@@ -192,26 +157,65 @@
             executePlainSQL("DROP TABLE demoTable");
 
             // Create new table
-            echo "<br> creating new table <br>";
             executePlainSQL("CREATE TABLE demoTable (id int PRIMARY KEY, name char(30))");
             OCICommit($db_conn);
         }
 
         function handleInsertRequest() {
             global $db_conn;
+           
 
             //Getting the values from user and insert data into the table
+        
+
+            //Calculating Total Cost
+            $rent_id = $_POST['rental'];
+            $from_dt = executePlainSQL("SELECT fromdt FROM Rental WHERE rentid='" . $rent_id . "'");
+            $to_dt = executePlainSQL("SELECT todt FROM Rental WHERE rentid='" . $rent_id . "'");
+
+            // converting timestamp to DateTime objects
+            $from_dtDT = new DateTime("@" . $from_dt);
+            $to_dtDT = new DateTime("@" . $to_dt);
+
+            // finding difference between DateTime objects
+            $interval = $from_dtDT->diff($to_dtDT);
+            $difference = $interval->format("%a");
+
+            //Finding specific rates for the returned vehicle
+            $w_rate = executePlainSQL("SELECT vt.wrate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
+            $d_rate = executePlainSQL("SELECT vt.drate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
+            $wi_rate = executePlainSQL("SELECT vt.wirate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
+            $di_rate = executePlainSQL("SELECT vt.dirate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
+
+            //Calculating cost in weeks and days
+            $weeks = floor($difference / 7);
+            $days = $difference - ($weeks*7);
+
+            $cost = ($weeks*$w_rate + $weeks*$wi_rate) + ($days*$d_rate + $days*$di_rate);
+            $driverate = ($weeks*$w_rate + $days*$d_rate);
+            $insurrate = ($weeks*$wi_rate + $days*$di_rate);
+                        
             $tuple = array (
-                ":bind1" => $_POST['insNo'],
-                ":bind2" => $_POST['insName']
+                ":bind1" => $_POST['rental'],
+                ":bind2" => $_POST['insreturndt'],
+                ":bind3" => $_POST['insodometer'], 
+                ":bind4" => $_POST['insfulltank'],
+                ":bind5" => $cost
             );
 
             $alltuples = array (
                 $tuple
             );
 
-            executeBoundSQL("insert into demoTable values (:bind1, :bind2)", $alltuples);
+            executeBoundSQL("insert into return values (:bind1, :bind2, :bind3, :bind4, :bind5)", $alltuples);
             OCICommit($db_conn);
+
+            // Show cost breakdown
+            if ($row = OCI_Fetch_Array($cost, OCI_BOTH)) {
+                echo "<br>Total Cost Breakdown: ". $row[0]. "<br>";
+                echo "<br> Driving Costs: " . $driverate . "<br>";
+                echo "<br> Insurance Costs: " . $insurrate . "<br>";
+            }
         }
 
         function handleCountRequest() {
@@ -254,11 +258,47 @@
             }
         }
 
-		if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
+		?>
+        
+        <h2>Returns</h2>
+        <hr />
+
+        <form method="POST" action="clerk_return.php">
+            <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
+            Rental ID: 
+                <?php
+                    
+                    connectToDB();
+                    $rentals = executePlainSQL("SELECT rentid FROM rental");
+                    echo  '<select name="rental"  multiple="no">';
+
+                    while ($row = OCI_Fetch_Array($rentals, OCI_RETURN_NULLS+OCI_ASSOC))
+                    {
+                        echo "<option value=\"". $row['RENTID'] . "\">" . $row['RENTID'] . "</option>";
+                    }
+                    echo '</select>';
+                  ?>
+                <br><br/>
+
+            Return Date: <input type="datetime-local" name="insreturndt"> <br /><br />
+            Odometer: <input type="text" name="insodometer"> <br /><br />
+            Tank Level: <input type="text" name="insfulltank"> <br /><br />
+            <input type="submit" value="Submit" name="insertSubmit"></p>
+        </form>
+
+        <hr />
+
+        <form method="GET" action="clerk_return.php"> <!--Generate Receipt-->
+            <input type="hidden" id="showTableRequest" name="showTableRequest">
+            <input type="submit" value="Generate Receipt" name="showTable"></p>
+        </form>
+        
+        <?php
+        if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
             handlePOSTRequest();
         } else if (isset($_GET['countTupleRequest']) || isset($_GET['showTableRequest'])) {
             handleGETRequest();
         }
-		?>
-	</body>
+        ?>
+    </body>
 </html>

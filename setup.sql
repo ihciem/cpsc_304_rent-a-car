@@ -21,6 +21,7 @@ create table vehicleType(
 	vtname varchar2(20) primary key,
 	features varchar2(20) not null,
 	wrate float not null,
+	drate float not null,
 	hrate float not null,
 	wirate float not null,
 	dirate float not null,
@@ -92,13 +93,13 @@ insert into branch values('8888 University Dr.', 'Burnaby');
 insert into branch values('123 Bay Street', 'Toronto');
 insert into branch values('100 Wall Street', 'New York City');
 
-insert into vehicleType values('Economy', 'N/A', 300, 10, 100, 15, 5, 10);
-insert into vehicleType values('Compact', 'N/A', 300, 10, 100, 15, 5, 10);
-insert into vehicleType values('Mid-size', 'N/A', 300, 10, 100, 15, 5, 10);
-insert into vehicleType values('Standard', 'N/A', 300, 10, 100, 15, 5, 10);
-insert into vehicleType values('Full-size', 'N/A', 300, 10, 100, 15, 5, 10);
-insert into vehicleType values('SUV', 'N/A', 300, 10, 100, 15, 5, 10);
-insert into vehicleType values('Truck', 'N/A', 300, 10, 100, 15, 5, 10);
+insert into vehicleType values('Economy', 'N/A', 300, 50, 10, 100, 15, 5, 10);
+insert into vehicleType values('Compact', 'N/A', 350, 55, 15, 110, 20, 6, 10);
+insert into vehicleType values('Mid-size', 'N/A', 400, 60, 20, 120, 25, 7, 10);
+insert into vehicleType values('Standard', 'N/A', 450, 65, 25, 130, 30, 8, 10);
+insert into vehicleType values('Full-size', 'N/A', 500, 70, 30, 140, 40, 9, 10);
+insert into vehicleType values('SUV', 'N/A', 500, 70, 30, 140, 40, 9, 10);
+insert into vehicleType values('Truck', 'N/A', 600, 80, 40, 150, 50, 10, 10);
 
 insert into vehicle values(0001, '123ABC', 'Toyota', 'Camry', 'red', '50000', 'available', 'Economy', '123 Cordova Street', 'Vancouver');
 insert into vehicle values(0002, '124ABC', 'Toyota', 'Avalon', 'red', '51243', 'available', 'Full-size', '123 Cordova Street', 'Vancouver');

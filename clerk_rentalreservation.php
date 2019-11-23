@@ -10,24 +10,7 @@
     </head>
 
     <body>
-        <h2>Rental With a Prior Reservation</h2>
-        <hr />
-
-        <form method="POST" action="clerk_rentalreservation.php">
-            <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
-            Reservation Confirmation Number: <input type="text" name="confno"> <br /><br />
-            <!--Card Number insert-->
-            Card Number: <input type="text" name="cardno"> <br /><br />
-            <input type="submit" value="Submit" name="insertSubmit"></p>
-        </form>
-
-        <hr />
-
-        <form method="GET" action="clerk_rentalreservation.php"> <!--Generate Receipt-->
-            <input type="hidden" id="showTableRequest" name="showTableRequest">
-            <input type="submit" value="Generate Receipt" name="showTable"></p>
-        </form>
-
+        
       <?php
 		//this tells the system that it's no longer just parsing html; it's now parsing PHP ------------------------- END OF HTML ----------------------------
         include 'connectToDB.php';
@@ -108,7 +91,7 @@
         function printResult($result) { //prints results from a select statement
             $header = false;
 
-            echo "<br>Generating receipt for '" . $confno . "':<br>";
+            echo "<br>Generating receipt<br>";
             echo "<table>";
             while ($row = OCI_Fetch_Array($result, OCI_BOTH)) {
                 $numKeys = array_filter(array_keys($row), function($numKey) {return is_int($numKey);});
@@ -161,10 +144,14 @@
 
             $confno = $_POST['confno'];
 
-            $vlicense = executePlainSQL("SELECT v.vlicense FROM reservation r, vehicle v WHERE r.confno = '" . $confno . "' AND r.vtname = v.vtname");
-            echo "<br> Grabbing vlicense <br>";
+            $vlicense = executePlainSQL("SELECT v.vlicense FROM reservation r, vehicle v WHERE r.confno = '" . $confno . "' AND r.vtname = v.vtname AND ROWNUM <= 1");
+            if ($row = OCI_Fetch_Array($vlicense, OCI_BOTH)) {
+                echo "<br> Grabbing vlicense:" . $row[0] . "<br>";
+            }
             $odometer = executePlainSQL("SELECT odometer FROM vehicle WHERE vlicense = '" . $vlicense . "'");
-            echo "<br> Grabbing odometer <br>";
+            if ($row = OCI_Fetch_Array($odometer, OCI_BOTH)) {
+                echo "<br> Grabbing odometer:" . $row[0] . "<br>";
+            }
             executePlainSQL("UPDATE vehicle SET status = 'rented' WHERE vlicense ='" . $vlicense . "'");
             echo "<br> Updating vehicle status <br>";
 
@@ -177,15 +164,16 @@
 
             //Getting the values from user and insert data into the table
             $rentIDresGen = $rentIDresGen++;
+            $rentIDString = strval($rentIDresGen);
 
             $tuple = array (
-                ":bind1" => '$rentIDresGen',
+                ":bind1" => $rentIDString,
                 ":bind2" => $_POST['cardno'],
-                ":bind3" => '$odometer',
-                ":bind4" => '$vlicense',
-                ":bind5" => '$fromdt',
-                ":bind6" => '$todt',
-                ":bind7" => '$dlicense',
+                ":bind3" => $odometer,
+                ":bind4" => $vlicense,
+                ":bind5" => $fromdt,
+                ":bind6" => $todt,
+                ":bind7" => $dlicense,
                 ":bind8" => $_POST['confno']
             );
 
@@ -194,7 +182,7 @@
             );
 
 
-            executeBoundSQL("INSERT INTO rental (rentid, cardno, odometer, vlicense, fromdt, todt, dlicense, confno) VALUES (:bind1, :bind2, :bind3, :bind4, :bind5, :bind6, :bind7, :bind8)", $alltuples);
+            executeBoundSQL("INSERT INTO rental VALUES (:bind1, :bind2, :bind3, :bind4, :bind5, :bind6, :bind7, :bind8)", $alltuples);
             OCICommit($db_conn);
         }
 
@@ -216,6 +204,12 @@
             $result = executePlainSQL("SELECT R.rentid, R.fromdt, R.todt, v.vtname FROM rental R, vehicle v WHERE R.vlicense = v.vlicense AND R.rentid = '" . $rentIDresGen . "'");
 
             printResult($result);
+
+            $count = executePlainSQL("SELECT Count(*) FROM reservation");
+
+            if (($row = oci_fetch_row($count)) != false) {
+                echo "<br> The number of tuples in demoTable: " . $row[0] . "<br>";
+            }
         }
 
         // HANDLE ALL POST ROUTES
@@ -243,12 +237,46 @@
             }
         }
 
-		if (isset($_POST['insertSubmit'])) {
+        ?>
+        
+        <h2>Rental With a Prior Reservation</h2>
+        <hr />
+
+        <form method="POST" action="clerk_rentalreservation.php">
+            <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
+            Reservation Confirmation Number: 
+                <?php
+                    
+                    connectToDB();
+                    $reservations = executePlainSQL("SELECT reservation.confno FROM reservation");
+                    echo  '<select name="confno"  multiple="no">';
+
+                    while ($row = OCI_Fetch_Array($reservations, OCI_RETURN_NULLS+OCI_ASSOC))
+                    {
+                        echo "<option value=\"". $row['CONFNO'] . "\">" . $row['CONFNO'] . "</option>";
+                    }
+                    echo '</select>';
+                  ?>
+                <br><br/>
+            <!--Card Number insert-->
+            Card Number: <input type="text" name="cardno"> <br /><br />
+            <input type="submit" value="Submit" name="insertSubmit"></p>
+        </form>
+
+        <hr />
+
+        <form method="GET" action="clerk_rentalreservation.php"> <!--Generate Receipt-->
+            <input type="hidden" id="showTableRequest" name="showTableRequest">
+            <input type="submit" value="Generate Receipt" name="showTable"></p>
+        </form>
+        
+        <?php
+        if (isset($_POST['insertSubmit'])) {
             handlePOSTRequest();
         } else if (isset($_GET['countTupleRequest']) || isset($_GET['showTableRequest'])) {
             handleGETRequest();
         }
-		?>
+         ?>
 	</body>
 
 </html>
