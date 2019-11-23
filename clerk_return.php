@@ -107,7 +107,6 @@
         function printResult($result) { //prints results from a select statement
             $header = false;
 
-            echo "<br>Retrieved data from table demoTable:<br>";
             echo "<table>";
             while ($row = OCI_Fetch_Array($result, OCI_BOTH)) {
                 $numKeys = array_filter(array_keys($row), function($numKey) {return is_int($numKey);});
