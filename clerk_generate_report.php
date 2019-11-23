@@ -22,29 +22,36 @@
     <body>
       <?php //this tells the system that it's no longer just parsing html; it's now parsing PHP
       include 'connectToDB.php';
+
       $success = True; //keep track of errors so it redirects the page only if there are no errors
       $db_conn = NULL; // edit the login credentials in connectToDB()
       $show_debug_alert_messages = False; // set to True if you want alerts to show you which methods are being triggered (see how it is used in debugAlertMessage())
       $rentals_status = 'unchecked';
       $returns_status = 'unchecked';
       $date = date("Y/m/d");
+
       function debugAlertMessage($message) {
           global $show_debug_alert_messages;
+
           if ($show_debug_alert_messages) {
               echo "<script type='text/javascript'>alert('" . $message . "');</script>";
           }
       }
+
       function executePlainSQL($cmdstr) { //takes a plain (no bound variables) SQL command and executes it
           //echo "<br>running ".$cmdstr."<br>";
           global $db_conn, $success;
+
           $statement = OCIParse($db_conn, $cmdstr);
           //There are a set of comments at the end of the file that describe some of the OCI specific functions and how they work
+
           if (!$statement) {
               echo "<br>Cannot parse the following command: " . $cmdstr . "<br>";
               $e = OCI_Error($db_conn); // For OCIParse errors pass the connection handle
               echo htmlentities($e['message']);
               $success = False;
           }
+
           $r = OCIExecute($statement, OCI_DEFAULT);
           if (!$r) {
               echo "<br>Cannot execute the following command: " . $cmdstr . "<br>";
@@ -52,8 +59,10 @@
               echo htmlentities($e['message']);
               $success = False;
           }
+
     return $statement;
   }
+
       function executeBoundSQL($cmdstr, $list) {
           /* Sometimes the same statement will be executed several times with different values for the variables involved in the query.
   In this case you don't need to create the statement several times. Bound variables cause a statement to only be
@@ -61,12 +70,14 @@
   See the sample code below for how this function is used */
     global $db_conn, $success;
     $statement = OCIParse($db_conn, $cmdstr);
+
           if (!$statement) {
               echo "<br>Cannot parse the following command: " . $cmdstr . "<br>";
               $e = OCI_Error($db_conn);
               echo htmlentities($e['message']);
               $success = False;
           }
+
           foreach ($list as $tuple) {
               foreach ($tuple as $bind => $val) {
                   //echo $val;
@@ -74,6 +85,7 @@
                   OCIBindByName($statement, $bind, $val);
                   unset ($val); //make sure you do not remove this. Otherwise $val will remain in an array object wrapper which will not be recognized by Oracle as a proper datatype
       }
+
               $r = OCIExecute($statement, OCI_DEFAULT);
               if (!$r) {
                   echo "<br>Cannot execute the following command: " . $cmdstr . "<br>";
@@ -84,6 +96,7 @@
               }
           }
       }
+
     function printResult($result) { //prints results from a select statement
         $header = false;
         echo "<table>";
@@ -108,30 +121,38 @@
         }
         echo "</table>";
     }
+
       function printRentals() { //prints results from a select statement
           global $date;
           $branchSelected = false;
           echo "<b><u>$date</u></b></b>" .strtoupper("<b><u> Daily Rentals Report</u></b><br>");
+
           if ($_GET['branch']=="all") {
             echo strtoupper("<b><u>for all branches</u></b>");
             echo strtoupper("<br></br><br><b><u>Summary of results</u></b><br>");
+
             executePlainSQL("CREATE OR REPLACE VIEW rentalsToday AS SELECT * FROM rental where to_char(cast(rental.fromdt as date), 'YYYY/MM/DD')='$date'");
+
           } else {
             $branchSelected = true;
             $branch = $_GET['branch'];
             $position = strpos($branch, ',');
             $location = substr($branch, 0, $position);
             $city = substr($branch, $position+1);
+
             echo strtoupper("<b>for branch: </b>".$location.", ".$city);
             echo strtoupper("<br></br><br><b><u>Summary of results</u></b><br>");
             executePlainSQL("CREATE OR REPLACE VIEW rentalsToday AS SELECT rent.rentid, rent.cardno, rent.odometer, rent.vlicense, rent.fromdt, rent.todt, rent.dlicense, rent.confno FROM rental rent, vehicle v where rent.vlicense = v.vlicense AND to_char(cast(rent.fromdt as date), 'YYYY/MM/DD')='$date' AND v.location = '$location' AND v.city = '$city'");
           }
+
           // number of vehicles rented per category
           $noPerCategory = executePlainSQL("SELECT v.vtname, COUNT(*) FROM rentalsToday rT, vehicle v WHERE rT.vlicense = v.vlicense GROUP BY v.vtname");
           echo "<br>Number of Rentals Per Vehicle Category</br>";
           printResult($noPerCategory);
+
           // number of rentals at each branch
-          $noPerBranch = executePlainSQL("SELECT v.location, v.city, COUNT(*) FROM rentalsToday rT, vehicle v WHERE rT.vlicense = v.vlicense GROUP BY v.location, v.city");
+          $noPerBranch = executePlainSQL("SELECT v.city, v.location, COUNT(*) FROM rentalsToday rT, vehicle v WHERE rT.vlicense = v.vlicense GROUP BY v.city, v.location");
+
           if ($branchSelected) {
             // number of rentals at each branch
             if ($row = OCI_Fetch_Array($noPerBranch, OCI_BOTH)) {
@@ -143,6 +164,7 @@
             echo "<br>Number of Rentals Per Branch</br>";
             printResult($noPerBranch);
           }
+
           // total number of new rentals across whole company
           $totalRentals= executePlainSQL("SELECT Count(*) FROM rentalsToday");
           if ($row = OCI_Fetch_Array($totalRentals, OCI_BOTH)) {
@@ -150,15 +172,18 @@
           } else {
             echo "<br>Company Total Number of Rentals Today: 0</br>";
           }
+
           echo strtoupper("<br><b><u>DATA</u></b><br>");
           $result = executePlainSQL("SELECT v.city, v.location, v.vtname, v.vlicense, v.vid, v.make, v.model, v.color, v.odometer, v.status FROM rentalsToday rT, rental rent, vehicle v WHERE rT.rentid = rent.rentid AND rent.vlicense = v.vlicense ORDER BY v.city, v.location, v.vtname");
           echo "<br>Retrieved vehicle data:<br>";
           printResult($result);
       }
+
       function printReturns() { //prints results from a select statement
         global $date;
         $branchSelected = false;
         echo "<b><u>$date</u></b></b>" .strtoupper("<b><u> Daily Rentals Report</u></b><br>");
+
         if ($_GET['branch']=="all") {
           echo strtoupper("<b>for all branches</b>");
           echo strtoupper("<br></br><br><b><u>Summary of results</u></b><br>");
@@ -169,21 +194,25 @@
           $position = strpos($branch, ',');
           $location = substr($branch, 0, $position);
           $city = substr($branch, $position+1);
+
           echo strtoupper("<b>for branch: </b>".$location.", ".$city);
           echo strtoupper("<br></br><br><b><u>Summary of results</u></b><br>");
           executePlainSQL("CREATE OR REPLACE VIEW returnsToday AS SELECT r.rentid, r.returndt, r.odometer, r.fulltank, r.value FROM return r, rental rent, vehicle v where r.rentid = rent.rentid AND rent.vlicense = v.vlicense AND to_char(cast(r.returndt as date), 'YYYY/MM/DD')='$date' AND v.location = '$location' AND v.city = '$city'");
         }
+
         // number of returns and revenue per vehicle category
         $noPerCategory = executePlainSQL("SELECT v.vtname, COUNT(*), SUM(rT.value) FROM returnsToday rT, rental rent, vehicle v WHERE rT.rentid = rent.rentid AND rent.vlicense = v.vlicense GROUP BY v.vtname");
         echo "<br>Number of Returns and Revenue Per Vehicle Category<br>";
         printResult($noPerCategory);
+
         // subtotals for the number of vehicles and revenue per branch;
-        $subTotals = executePlainSQL("SELECT v.location, v.city, COUNT(*), SUM(rT.value) FROM returnsToday rT, rental rent, vehicle v WHERE rT.rentid = rent.rentid AND rent.vlicense = v.vlicense GROUP BY v.location, v.city");
+        $subTotals = executePlainSQL("SELECT v.city, v.location, COUNT(*), SUM(rT.value) FROM returnsToday rT, rental rent, vehicle v WHERE rT.rentid = rent.rentid AND rent.vlicense = v.vlicense GROUP BY v.city, v.location ORDER BY v.city, v.location");
+
         if ($branchSelected) {
           if ($row = OCI_Fetch_Array($subTotals, OCI_BOTH)) {
             echo "<br>Branch Subtotal Today: ". $row[3]. "<br>";
           } else {
-            echo "<br>Branch Subtotal Today: N/A<br>";
+            echo "<br>Branch Subtotal Today: 0</br>";
           }
         } else {
           echo "<br>Subtotals Per Branch<br>";
@@ -308,13 +337,12 @@
                 <br><br/>
             <input type="submit" value="Generate" name="generateReport"></p>
         </form>
-
         <?php
         if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
             handlePOSTRequest();
         } else if (isset($_GET['countTupleRequest']) || isset($_GET['generateReportRequest'])) {
             handleGETRequest();
-            }
+        }
          ?>
 	</body>
 </html>
