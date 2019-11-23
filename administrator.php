@@ -1,21 +1,3 @@
-<!--Test Oracle file for UBC CPSC304 2018 Winter Term 1
-  Created by Jiemin Zhang
-  Modified by Simona Radu
-  Modified by Jessica Wong (2018-06-22)
-  This file shows the very basics of how to execute PHP commands
-  on Oracle.
-  Specifically, it will drop a table, create a table, insert values
-  update values, and then query for values
-
-  IF YOU HAVE A TABLE CALLED "demoTable" IT WILL BE DESTROYED
-
-  The script assumes you already have a server set up
-  All OCI commands are commands to the Oracle libraries
-  To get the file to work, you must place it somewhere where your
-  Apache server can run it, and you must rename it to have a ".php"
-  extension.  You must also change the username and password on the
-  OCILogon below to be your ORACLE username and password -->
-
 <html>
     <head>
         <!-- Required meta tags -->
@@ -29,24 +11,64 @@
     </head>
 
     <body>
-      <h2>Welcome back to work!</h2>
+      <h2>Manipulate This Database</h2>
       <hr />
-      <form method="POST" action="clerk_rental.php">
-          <!-- if you want another page to load after the button is clicked, you have to specify that page in the action parameter -->
-          <input type="hidden" id="resetTablesRequest" name="resetTablesRequest">
-          <p><input type="submit" value="Rent a Vehicle" name="reset"></p>
-      </form>
-      <form method="POST" action="clerk_return.php">
-          <!-- if you want another page to load after the button is clicked, you have to specify that page in the action parameter -->
-          <input type="hidden" id="resetTablesRequest" name="resetTablesRequest">
-          <p><input type="submit" value="Return a Vehicle" name="reset"></p>
-      </form>
-      <form method="POST" action="clerk_generate_report.php">
-          <!-- if you want another page to load after the button is clicked, you have to specify that page in the action parameter -->
-          <input type="hidden" id="resetTablesRequest" name="resetTablesRequest">
-          <p><input type="submit" value="Generate Reports" name="reset"></p>
+      <!--View All Tables-->
+      <h2>View all Tables</h2>
+      <form method="GET" action="administrator.php"> <!--refresh page when submitted-->
+          <input type="hidden" id="showAllTablesRequest" name="showAllTablesRequest">
+          <p><input type="submit" value="Show Tables" name="showAllTables"></p>
       </form>
 
+      <hr />
+        <!--Add data to specific table-->
+        <h2>Insert Values into a Table</h2>
+        <form method="POST" action="customer_search.php"> <!--refresh page when submitted-->
+            <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
+            Value: <input type="text" name="insValue"> <br /><br />
+            Column: <input type="text" name="insValue"> <br /><br />
+            Table: <input type="text" name="insTableName"> <br /><br />
+
+            <input type="submit" value="Insert" name="insertSubmit"></p>
+        </form>
+
+        <hr />
+
+        <!--Delete data in a specific table-->
+        <h2>Delete Data from a Table</h2>
+        <form method="GET" action="administrator.php"> <!--refresh page when submitted-->
+          <input type="hidden" id="showTableRequest" name="showTableRequest">
+          Table Name: <input type="text" name="insDTableName"> <br /><br />
+          Condition
+          <p><input type="submit" value="Show Table" name="showTable"></p>
+          
+      </form>
+
+        
+        <hr />
+        <!--Update data in a specific table-->
+        <h2>Update Values in a Table</h2>
+
+        <form method="POST" action="customer_search.php"> <!--refresh page when submitted-->
+            <input type="hidden" id="updateQueryRequest" name="updateQueryRequest">
+            Old Name: <input type="text" name="oldName"> <br /><br />
+            New Name: <input type="text" name="newName"> <br /><br />
+            Table Name: <input type="text" name="insDTableName"> <br /><br />
+
+            <input type="submit" value="Update" name="updateSubmit"></p>
+        </form>
+
+        <hr />
+        <!--View data in a specific table-->
+        <h2>View Data from a Table</h2>
+        <form method="GET" action="administrator.php"> <!--refresh page when submitted-->
+          <input type="hidden" id="showTableRequest" name="showTableRequest">
+          Table Name: <input type="text" name="insVTableName"> <br /><br />
+          <p><input type="submit" value="Show Table" name="showTable"></p>
+          
+      </form>
+
+      <hr />
 
       <?php
       //this tells the system that it's no longer just parsing html; it's now parsing PHP
@@ -159,7 +181,7 @@
           OCILogoff($db_conn);
       }
 
-      function handleShowTableRequest() {
+      function handleShowAllTablesRequest() {
           global $db_conn;
 
           $result1 = executePlainSQL("SELECT * FROM branch");
@@ -204,8 +226,8 @@
       // A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
       function handleGETRequest() {
           if (connectToDB()) {
-              if (array_key_exists('showTable', $_GET)) {
-                  handleShowTableRequest();
+              if (array_key_exists('showAllTables', $_GET)) {
+                  handleShowAllTablesRequest();
               }
 
               disconnectFromDB();
@@ -215,7 +237,7 @@
 //      if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
 //          handlePOSTRequest();
 //      } else
-      if (isset($_GET['showTableRequest'])) {
+      if (isset($_GET['showAllTablesRequest'])) {
           handleGETRequest();
       }
       ?>
