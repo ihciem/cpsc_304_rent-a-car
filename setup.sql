@@ -69,7 +69,7 @@ create table rental(
 	fromdt timestamp(0) not null,
 	todt timestamp(0) not null,
 	dlicense varchar2(20) not null,
-	confno varchar2(50),
+	confno varchar2(50) null,
 	foreign key (confno) references reservation(confno),
 	foreign key (vlicense) references vehicle(vlicense),
 	foreign key (dlicense) references customer(dlicense)

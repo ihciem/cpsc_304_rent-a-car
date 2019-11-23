@@ -186,11 +186,11 @@
 
           $result1 = executePlainSQL("SELECT * FROM branch");
           $result2 = executePlainSQL("SELECT * FROM vehicleType");
-          $result3 = executePlainSQL("SELECT * FROM branch");
-          $result4 = executePlainSQL("SELECT * FROM vehicleType");
-          $result5 = executePlainSQL("SELECT * FROM branch");
-          $result6 = executePlainSQL("SELECT * FROM vehicleType");
-          $result7 = executePlainSQL("SELECT * FROM branch");
+          $result3 = executePlainSQL("SELECT * FROM vehicle");
+          $result4 = executePlainSQL("SELECT * FROM customer");
+          $result5 = executePlainSQL("SELECT * FROM reservation");
+          $result6 = executePlainSQL("SELECT * FROM rental");
+          $result7 = executePlainSQL("SELECT * FROM return");
           
           echo "<br> Branch";
           printResult($result1);
