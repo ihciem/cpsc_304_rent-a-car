@@ -115,8 +115,8 @@ insert into vehicle values(0021, '890NWD', 'Honda', 'Avancier', 'light', '45323'
 insert into vehicle values(0008, '456HEY', 'Mercedes', 'GLS', 'yellow', '75634', 'available', 'SUV', '2329 West Mall', 'Vancouver');
 insert into vehicle values(0014, '123HEY', 'Mercedes', 'GLS', 'yellow', '75634', 'available', 'SUV', '555 Seymour St.', 'Vancouver');
 insert into vehicle values(0015, '234HEY', 'Mercedes', 'GLS', 'yellow', '75634', 'available', 'SUV', '555 Seymour St.', 'Vancouver');
-insert into vehicle values(0016, '345HEY', 'Mercedes', 'GLS', 'yellow', '75634', 'available', 'SUV', '3700 Willingdon Ave.', 'Vancouver');
-insert into vehicle values(0017, '567HEY', 'Mercedes', 'GLS', 'yellow', '75634', 'available', 'SUV', '3700 Willingdon Ave.', 'Vancouver');
+insert into vehicle values(0016, '345HEY', 'Mercedes', 'GLS', 'yellow', '75634', 'available', 'SUV', '3700 Willingdon Ave.', 'Burnaby');
+insert into vehicle values(0017, '567HEY', 'Mercedes', 'GLS', 'yellow', '75634', 'available', 'SUV', '3700 Willingdon Ave.', 'Burnaby');
 insert into vehicle values(0025, '678HEY', 'Mercedes', 'GLS', 'black', '75634', 'available', 'SUV', '555 Seymour St.', 'Vancouver');
 insert into vehicle values(0011, 'XXORXX', 'Honda', 'Civic', 'gold', '345643', 'available', 'Compact', '123 Bay St.', 'Toronto');
 insert into vehicle values(0018, 'XXABXX', 'Honda', 'Civic', 'gold', '345643', 'available', 'Compact', '598 Bay St.', 'Toronto');
@@ -167,7 +167,7 @@ insert into reservation values('RES0000000013', 'SUV', 'VA00013', TO_TIMESTAMP('
 -- rented, not yet returned
 insert into reservation values('RES0000000004', 'Mid-size', 'VA00004',  TO_TIMESTAMP('2019/11/23 10:45:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/12/15 16:30:00', 'YYYY/MM/DD HH24:MI:SS'));
 insert into reservation values('RES0000000008', 'SUV', 'VA00008', TO_TIMESTAMP('2019/11/23 10:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/12/30 16:30:00', 'YYYY/MM/DD HH24:MI:SS'));
-insert into reservation values('RES0000000013', 'SUV', 'VA00013', TO_TIMESTAMP('2019/11/23 10:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/12/30 16:30:00', 'YYYY/MM/DD HH24:MI:SS'));
+insert into reservation values('RES0000000015', 'SUV', 'VA00015', TO_TIMESTAMP('2019/11/23 10:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/12/30 16:30:00', 'YYYY/MM/DD HH24:MI:SS'));
 insert into reservation values('RES0000000014', 'Compact', 'VA00014', TO_TIMESTAMP('2019/11/23 10:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/12/21 16:30:00', 'YYYY/MM/DD HH24:MI:SS'));
 
 
@@ -183,8 +183,8 @@ insert into rental values('R0000000009', 1234454656344564, 423533, '123HEY', TO_
 insert into rental values('R0000000010', 1234454656344564, 423533, '456HEY', TO_TIMESTAMP('2019/11/03 10:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 'VA00010', 'RES0000000010');
 insert into rental values('R0000000011', 1234454656344564, 423533, '12AB56', TO_TIMESTAMP('2019/11/03 10:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 'VA00011', 'RES0000000011');
 insert into rental values('R0000000012', 1234454656344564, 423533, '789AND', TO_TIMESTAMP('2019/11/03 10:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 'VA00012', 'RES0000000012');
-insert into rental values('R0000000013', 1234454656344564, 423533, '143IHY', TO_TIMESTAMP('2019/11/23 10:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/12/30 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 'VA00013', 'RES0000000013');
 insert into rental values('R0000000014', 1234454656344564, 423533, '88YU88', TO_TIMESTAMP('2019/11/23 10:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/12/30 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 'VA00014', 'RES0000000014');
+insert into rental values('R0000000015', 1234454656344564, 423533, '143IHY', TO_TIMESTAMP('2019/11/23 10:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/12/30 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 'VA00015', 'RES0000000015');
 
 
 insert into return values('R0000000003', TO_TIMESTAMP('2019/11/06 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 45345, 'yes', 300);
