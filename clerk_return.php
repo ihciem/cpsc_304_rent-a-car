@@ -149,11 +149,16 @@
             }
 
             // converting timestamp to DateTime objects
-            $from_dtDT = new DateTime("@" . $from_dt);
-            $to_dtDT = new DateTime("@" . $to_dt);
+            /*
+            $from_dtDT = new DateTime($from_dt);
+            echo "<br> Grabbing DateTime fromdt: " . $from_dtDT . "<br>";
+            $to_dtDT = new DateTime($to_dt);
+            echo "<br> Grabbing DateTime todt: " . $to_dtDT . "<br>";
+            */
 
             // finding difference between DateTime objects
-            $interval = $from_dtDT->diff($to_dtDT);
+            $interval = $from_dt->diff($to_dt);
+            echo "<br> Grabbing interval: " . $interval . "<br>";
             
             $difference = $interval->format("%a");
             echo "<br> Grabbing period: " . $difference . "<br>";
@@ -296,7 +301,8 @@
                 <br><br/>
 
             Odometer: <input type="text" name="insodometer"> <br /><br />
-            Full Tank: <input type="text" name="insfulltank"> <br /><br />
+            Full Tank: <input type="radio" name="insfulltank" value="yes"> Yes
+                       <input type="radio" name="insfulltank" value="no"> No<br>
             <input type="submit" value="Submit" name="insertSubmit"></p>
         </form>
 
