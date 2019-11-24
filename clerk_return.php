@@ -135,8 +135,14 @@
 
             //Calculating Total Cost
             $rent_id = $_POST['rental'];
-            $from_dt = executePlainSQL("SELECT fromdt FROM Rental WHERE rentid='" . $rent_id . "'");
-            $to_dt = executePlainSQL("SELECT todt FROM Rental WHERE rentid='" . $rent_id . "'");
+            $from_dtSQL = executePlainSQL("SELECT fromdt FROM Rental WHERE rentid='" . $rent_id . "'");
+            if ($row = OCI_Fetch_Array($from_dtSQL, OCI_BOTH)) {
+                $from_dt = $row[0];
+            }
+            $to_dtSQL = executePlainSQL("SELECT todt FROM Rental WHERE rentid='" . $rent_id . "'");
+            if ($row = OCI_Fetch_Array($to_dtSQL, OCI_BOTH)) {
+                $to_dt = $row[0];
+            }
 
             // converting timestamp to DateTime objects
             $from_dtDT = new DateTime("@" . $from_dt);
@@ -147,10 +153,22 @@
             $difference = $interval->format("%a");
 
             //Finding specific rates for the returned vehicle
-            $w_rate = executePlainSQL("SELECT vt.wrate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
-            $d_rate = executePlainSQL("SELECT vt.drate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
-            $wi_rate = executePlainSQL("SELECT vt.wirate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
-            $di_rate = executePlainSQL("SELECT vt.dirate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
+            $w_rateSQL = executePlainSQL("SELECT vt.wrate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
+            if ($row = OCI_Fetch_Array($w_rateSQL, OCI_BOTH)) {
+                $w_rate = $row[0];
+            }
+            $d_rateSQL = executePlainSQL("SELECT vt.drate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
+            if ($row = OCI_Fetch_Array($d_rateSQL, OCI_BOTH)) {
+                $d_rate = $row[0];
+            }
+            $wi_rateSQL = executePlainSQL("SELECT vt.wirate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
+            if ($row = OCI_Fetch_Array($wi_rateSQL, OCI_BOTH)) {
+                $wi_rate = $row[0];
+            }
+            $di_rateSQL = executePlainSQL("SELECT vt.dirate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
+            if ($row = OCI_Fetch_Array($di_rateSQL, OCI_BOTH)) {
+                $di_rate = $row[0];
+            }
 
             //Calculating cost in weeks and days
             $weeks = floor($difference / 7);
@@ -185,6 +203,10 @@
             if ($row = OCI_Fetch_Array($insurrate, OCI_BOTH)) {
                 echo "<br> Insurance Costs: " . $row[0] . "<br>";
             }
+
+            $result = executePlainSQL("SELECT rentid, returndt, value FROM return WHERE rentid = '" . $rent_id . "'");
+
+            printResult($result);
         }
 
         function handleCountRequest() {
@@ -260,7 +282,7 @@
 
             Return Date: <input type="datetime-local" name="insreturndt"> <br /><br />
             Odometer: <input type="text" name="insodometer"> <br /><br />
-            Tank Level: <input type="text" name="insfulltank"> <br /><br />
+            Full Tank: <input type="text" name="insfulltank"> <br /><br />
             <input type="submit" value="Submit" name="insertSubmit"></p>
         </form>
 

@@ -53,10 +53,12 @@
         include 'connectToDB.php';
         include 'printResult.php';
 
+        session_start();
+
         $success = True; //keep track of errors so it redirects the page only if there are no errors
         $db_conn = NULL; // edit the login credentials in connectToDB()
         $show_debug_alert_messages = False; // set to True if you want alerts to show you which methods are being triggered (see how it is used in debugAlertMessage())
-        $rentIDresGen = 500;
+        $rentid = uniqid(); //generated rentID for the rental table
 
         function debugAlertMessage($message) {
             global $show_debug_alert_messages;
@@ -150,37 +152,34 @@
         // HANDLER FOR INSERT
         function handleInsertRequest() {
             global $db_conn;
-            global $rentIDresGen;
+            global $rentid;
 
             // Find an available car
             $vt_name = $_POST['insvtname'];
 
-            $vlicense = executePlainSQL("SELECT v.vlicense From vehicle v WHERE v.vtname = '" . $vt_name . "' AND v.status = 'available' AND ROWNUM <= 1");
-            if (($row = oci_fetch_row($vlicense)) != false) {
-                echo "<br> Grabbing vlicense: . $row[0] . <br>";
+            $vlicenseSQL = executePlainSQL("SELECT v.vlicense From vehicle v WHERE v.vtname = '" . $vt_name . "' AND v.status = 'available' AND ROWNUM <= 1");
+            if ($row = OCI_Fetch_Array($vlicenseSQL, OCI_BOTH)) {
+                $vlicense = $row[0];
+                echo "<br> Grabbing vlicense: " . $row[0] . "<br>";
             }
-            $odometer = executePlainSQL("SELECT odometer FROM vehicle WHERE vlicense = '" . $vlicense . "'");
-            if (($row = oci_fetch_row($odometer)) != false) {
-                echo "<br> Grabbing odometer: . $row[0] . <br>";
+            $odometerSQL = executePlainSQL("SELECT odometer FROM vehicle WHERE vlicense = '" . $vlicense . "'");
+            if ($row = OCI_Fetch_Array($odometerSQL, OCI_BOTH)) {
+                $odometer = $row[0];
+                echo "<br> Grabbing odometer: " . $row[0] . "<br>";
             }
             executePlainSQL("UPDATE vehicle SET status = 'rented' WHERE vlicense ='" . $vlicense . "'");
             echo "<br> Updating vehicle status <br>";
 
-            $rentIDresGen = $rentIDresGen++;
-            $rentIDString = strval($rentIDresGen);
-            $confno = '1';
-
-            echo $confno;
             //Getting the values from user and insert data into the table
             $tuple = array (
-                ":bind1" => $rentIDString,
+                ":bind1" => $rentid,
                 ":bind2" => $_POST['inscardno'],
                 ":bind3" => $odometer,
                 ":bind4" => $vlicense,
                 ":bind5" => $_POST['insfromdt'],
                 ":bind6" => $_POST['instodt'],
                 ":bind7" => $_POST['insdlicense'],
-                ":bind8" => $confno
+                ":bind8" => null
             );
 
             $alltuples = array (
@@ -189,6 +188,10 @@
 
             executeBoundSQL("INSERT INTO rental VALUES (:bind1, :bind2, :bind3, :bind4, :bind5, :bind6, :bind7, :bind8)", $alltuples);
             OCICommit($db_conn);
+
+            $result = executePlainSQL("SELECT R.rentid, R.fromdt, R.todt, v.vtname FROM rental R, vehicle v WHERE R.vlicense = v.vlicense AND R.rentid = '" . $rentid . "'");
+
+            printResult($result);
         }
 
         function handleCountRequest() {

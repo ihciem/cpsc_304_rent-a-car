@@ -25,6 +25,12 @@
           <p><input type="submit" value="I am a Clerk"></p>
       </form>
 
+      <form action="administrator.php">
+          <!-- if you want another page to load after the button is clicked, you have to specify that page in the action parameter -->
+          
+          <p><input type="submit" value="Administrator"></p>
+      </form>
+
       <img src="https://www.chasingthedonkey.com/wp-content/uploads/2017/11/Car-Hire_Rent-A-car-1149997_1280.jpg" alt="Some Photo">
 	</body>
 </html>

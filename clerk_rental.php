@@ -10,6 +10,9 @@
     </head>
 
     <body>
+        <h2>So you want to start a Rental?</h2> 
+        <hr />
+         
         <form action="clerk_rentalreservation.php">
           <!-- if you want another page to load after the button is clicked, you have to specify that page in the action parameter -->
 
