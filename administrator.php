@@ -53,10 +53,10 @@
 
         <form method="POST" action="administrator.php"> <!--refresh page when submitted-->
             <input type="hidden" id="updateQueryRequest" name="updateQueryRequest">
-            Old Name: <input type="text" name="oldName"> <br /><br />
-            New Name: <input type="text" name="newName"> <br /><br />
-            Table Name: <input type="text" name="insDTableName"> <br /><br />
-
+            Table Name: <input type="text" name="insUTableName"> <br /><br />
+            Column Name: <input type="text" name="insWhere"> <br /><br />
+            Old Value: <input type="text" name="insWhereValue"> <br /><br />
+            New Value: <input type="text" name="newValue"> <br /><br />
             <input type="submit" value="Update" name="updateSubmit"></p>
         </form>
 
@@ -237,11 +237,24 @@
           OCI_Commit($db_conn);
       }
 
+      function handleUpdateRequest() {
+        global $db_conn;
+
+        $ut_name = $_POST['insUTableName'];
+        $cc = $_POST['insWhere'];
+        $cv = $_POST['insWhereValue'];
+        $newval = $_POST['newValue'];
+        
+        // you need the wrap the old name and new name values with single quotations
+        executePlainSQL("UPDATE $ut_name SET $cc='" . $newval . "' WHERE $cc ='" . $cv . "'");
+        OCICommit($db_conn);
+    }
+
       // HANDLE ALL POST ROUTES
       // A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
       function handlePOSTRequest() {
           if (connectToDB()) {
-            if (array_key_exists('deleteTuple', $_POST)) {
+            if (array_key_exists('deleteTupleRequest', $_POST)) {
                 handleDeleteTupleRequest();
             } else if (array_key_exists('updateQueryRequest', $_POST)) {
                 handleUpdateRequest();
@@ -255,9 +268,9 @@
       // A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
       function handleGETRequest() {
           if (connectToDB()) {
-              if (array_key_exists('showAllTables', $_GET)) {
+              if (array_key_exists('showAllTablesRequest', $_GET)) {
                   handleShowAllTablesRequest();
-              } else if (array_key_exists('showTable', $_GET)) {
+              } else if (array_key_exists('showTableRequest', $_GET)) {
                 handleShowTableRequest();
             }
 
@@ -265,9 +278,9 @@
           }
       }
 
-     if (isset($_POST['deleteTupleRequest']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
+     if (isset($_POST['deleteTuple']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
           handlePOSTRequest();
-     } else if (isset($_GET['showAllTablesRequest']) || isset($_GET['showTableRequest'])) {
+     } else if (isset($_GET['showAllTables']) || isset($_GET['showTable'])) {
           handleGETRequest();
       }
       ?>
