@@ -18,27 +18,87 @@
 
 <html>
     <head>
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
+
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
         <title>CPSC 304 PHP/Oracle Demonstration</title>
     </head>
 
     <body>
-        <h2>Welcome to Rent-A-Car!</h2>
+        <h2>Welcome to Super Rent!</h2>
 
         <hr />
 
         <h2>Show Available Vehicles</h2>
         <form method="GET" action="customer_search.php"> <!--refresh page when submitted-->
             Search By
+
+            <br/>
             <br/>
 
             <input type="hidden" id="showAvailableVehiclesRequest" name="showAvailableVehiclesRequest">
-            Vehicle Type: <input type="text" name="vType"> <br /><br />
-            Location: <input type="text" name="Location"> <br /><br />
-            Start Date: <input type="datetime-local" name="startDate"> <br /><br />
+            Vehicle Type: <input type="text" name="vType">
+            Location: <input type="text" name="Location">
+            Start Date: <input type="datetime-local" name="startDate">
             Return Date: <input type="datetime-local" name="returnDate"> <br /><br />
             <p><input type="submit" value="Show Available Vehicles" name="showAvailableVehicles"></p>
         </form>
 
+        <?php
+        include 'connectToDB.php';
+        include 'printResult.php';
+
+        function handleShowAvailableVehiclesRequest() {
+            global $db_conn;
+
+            $startDate = new DateTime($_POST['startDate']);
+            $startDate = date_format($startDate, 'd-M-Y h.i.s A');
+//            echo $startDate;
+            $returnDate = new DateTime($_POST['returnDate']);
+            $returnDate = date_format($returnDate,'d-M-Y h.i.s A');
+//            echo $returnDate;
+
+            //Getting the values from user and insert data into the table
+            $tuple = array (
+                ":bind1" => $_POST['vType'],
+                ":bind2" => $_POST['location'],
+                ":bind3" => $startDate,
+                ":bind4" => $returnDate
+            );
+
+            $alltuples = array (
+                $tuple
+            );
+
+            if ($_GET['vType'] == null && $_GET['location'] == null && $_GET['startDate'] == null && $_GET['returnDate'] == null) {
+                $result = executePlainSQL("SELECT * FROM vehicle WHERE status = 'available' ORDER BY vid");
+                $numberOfResults = count(oci_fetch_array($result));
+            }
+
+            echo "<strong>Number of Available Vehicles: </strong>" . $numberOfResults . "</br>";
+            printResult($result);
+        }
+
+        // HANDLE ALL GET ROUTES
+        // A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
+        function handleGETRequest() {
+            if (connectToDB()) {
+                if (array_key_exists('showAvailableVehiclesRequest', $_GET)) {
+                    handleShowAvailableVehiclesRequest();
+                }
+
+                disconnectFromDB();
+            }
+        }
+
+        if (isset($_GET['showAvailableVehicles'])) {
+            handleGETRequest();
+        }
+        ?>
         <hr />
 
         <h2>Make Reservation</h2>
@@ -49,7 +109,7 @@
             Start Date: <input type="datetime-local" name="startDate"> <br /><br />
             Return Date: <input type="datetime-local" name="returnDate"> <br /><br />
 
-            <input type="submit" value="Make Reservation" name="makeReservation"></p>
+            <p><input type="submit" value="Make Reservation" name="makeReservation"></p>
         </form>
 
         <?php
@@ -186,19 +246,6 @@
 
             executeBoundSQL("INSERT INTO reservation VALUES (:bind1, :bind2, :bind3, :bind4, :bind5)", $alltuples);
             OCICommit($db_conn);
-
-        }
-
-        function handleShowAvailableVehiclesRequest() {
-            global $db_conn;
-
-            $result = executePlainSQL("SELECT Count(*) FROM demoTable");
-
-            if (($row = oci_fetch_row($result)) != false) {
-                echo "<br> The number of tuples in demoTable: " . $row[0] . "<br>";
-                printResult(executePlainSQL("SELECT id, name FROM demoTable"));
-                // echo print_r($names);
-            }
         }
 
         // HANDLE ALL POST ROUTES
@@ -213,22 +260,8 @@
             }
         }
 
-        // HANDLE ALL GET ROUTES
-	// A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
-        function handleGETRequest() {
-            if (connectToDB()) {
-                if (array_key_exists('showAvailableVehiclesRequest', $_GET)) {
-                    handleShowAvailableVehiclesRequest();
-                }
-
-                disconnectFromDB();
-            }
-        }
-
 		if (isset($_POST['makeReservation'])) {
             handlePOSTRequest();
-        } else if (isset($_GET['showAvailableVehiclesRequest'])) {
-            handleGETRequest();
         }
 		?>
 	</body>
