@@ -180,7 +180,7 @@ OCILogon below to be your ORACLE username and password -->
     if ($row = OCI_Fetch_Array($grandTotals, OCI_BOTH)) {
       echo "<br>Company Grand Total Today: ". $row[0]. "<br>";
     } else {
-      echo "<br>Company Grand Total Today: 0br>";
+      echo "<br>Company Grand Total Today: 0<br>";
     }
     echo strtoupper("<br><b><u>DATA</u></b><br>");
     $result = executePlainSQL("SELECT v.city, v.location, v.vtname, v.vlicense, v.vid, v.make, v.model, v.color, v.odometer, v.status FROM returnsToday rT, rental rent, vehicle v WHERE rT.rentid = rent.rentid AND rent.vlicense = v.vlicense ORDER BY v.city, v.location, v.vtname");

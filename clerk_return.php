@@ -128,10 +128,10 @@
 
         function handleInsertRequest() {
             global $db_conn;
-           
+
 
             //Getting the values from user and insert data into the table
-        
+
 
             //Calculating Total Cost
             $rent_id = $_POST['rental'];
@@ -149,16 +149,16 @@
             }
 
             // converting timestamp to DateTime objects
-            
+
             $from_dtDT = new DateTime($from_dt);
             echo "<br> Grabbing DateTime fromdt: " . $from_dtDT . "<br>";
             $to_dtDT = new DateTime($to_dt);
             echo "<br> Grabbing DateTime todt: " . $to_dtDT . "<br>";
-            
+
             // finding difference between DateTime objects
             $interval = $from_dtDT->diff($to_dtDT);
             echo "<br> Grabbing interval: " . $interval . "<br>";
-            
+
             $difference = $interval->format("%d");
             echo "<br> Grabbing period: " . $difference . "<br>";
 
@@ -196,12 +196,12 @@
             echo "<br> Driving Rate: " . $driverate . "<br>";
             $insurrate = ($weeks*$wi_rate + $days*$di_rate);
             echo "<br> Insurance Rate: " . $insurrate . "<br>";
-                        
+
             $tuple = array (
                 ":bind1" => $_POST['rental'],
                 ":bind2" => $to_dt,
-                ":bind3" => $_POST['insodometer'], 
-                ":bind4" => $_POST['insfulltank'],
+                ":bind3" => $_POST['insodometer'],
+                ":bind4" => strtoupper($_POST['insfulltank']),
                 ":bind5" => $cost
             );
 
@@ -278,15 +278,15 @@
         }
 
 		?>
-        
+
         <h2>Returns</h2>
         <hr />
 
         <form method="POST" action="clerk_return.php">
             <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
-            Rental ID: 
+            Rental ID:
                 <?php
-                    
+
                     connectToDB();
                     $rentals = executePlainSQL("SELECT rentid FROM rental");
                     echo  '<select name="rental"  multiple="no">';
@@ -306,13 +306,7 @@
         </form>
 
         <hr />
-        
-        <!--Generate Receipt
-        <form method="GET" action="clerk_return.php"> 
-            <input type="hidden" id="showTableRequest" name="showTableRequest">
-            <input type="submit" value="Generate Receipt" name="showTable"></p>
-        </form>
-        -->
+
         <?php
         if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
             handlePOSTRequest();

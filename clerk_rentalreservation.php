@@ -10,7 +10,7 @@
     </head>
 
     <body>
-        
+
       <?php
 		//this tells the system that it's no longer just parsing html; it's now parsing PHP ------------------------- END OF HTML ----------------------------
         include 'connectToDB.php';
@@ -19,7 +19,7 @@
         $success = True; //keep track of errors so it redirects the page only if there are no errors
         $db_conn = NULL; // edit the login credentials in connectToDB()
         $show_debug_alert_messages = False; // set to True if you want alerts to show you which methods are being triggered (see how it is used in debugAlertMessage())
-        
+
 
         function debugAlertMessage($message) {
             global $show_debug_alert_messages;
@@ -103,7 +103,7 @@
         // HANDLER FOR INSERT
         function handleInsertRequest() {
             global $db_conn;
-            
+
             // Generate new unused rentid
             $rentidResult = executePlainSQL("SELECT rentid FROM rental WHERE rentid = (SELECT MAX(rentid) FROM rental)");
             $row = oci_fetch_array($rentidResult);
@@ -120,7 +120,7 @@
             // Finding vehicle from reservation confno
 
             $confno = $_POST['confno'];
-           
+
             $vlicenseSQL = executePlainSQL("SELECT v.vlicense FROM reservation r, vehicle v WHERE r.confno = '" . $confno . "' AND r.vtname = v.vtname AND ROWNUM <= 1");
             if ($row = OCI_Fetch_Array($vlicenseSQL, OCI_BOTH)) {
                 $vlicense = $row[0];
@@ -151,7 +151,7 @@
                 $dlicense = $row[0];
                 echo "<br> Grabbing dlicense: " . $row[0] . "<br>";
             }
-    
+
             $tuple = array (
                 ":bind1" => $rentid,
                 ":bind2" => $_POST['cardno'],
@@ -168,7 +168,7 @@
             );
 
             executePlainSQL("DELETE FROM rental WHERE rentid = '" . $rentid . "'");
-            echo "<br> Deleting Existing Tables with the same rentid <br>";
+            echo "<br> Deleting tuples with the same rentid <br>";
 
             executeBoundSQL("INSERT INTO rental VALUES (:bind1, :bind2, :bind3, :bind4, :bind5, :bind6, :bind7, :bind8)", $alltuples);
             echo "<br> Inserting values into rental table <br>";
@@ -203,7 +203,7 @@
 
             printResult($result);
 
-            
+
         }
 
         // HANDLE ALL POST ROUTES
@@ -232,17 +232,17 @@
         }
 
         ?>
-        
+
         <h2>Rental With a Prior Reservation</h2>
         <hr />
 
         <form method="POST" action="clerk_rentalreservation.php">
             <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
-            Reservation Confirmation Number: 
+            Reservation Confirmation Number:
                 <?php
-                    
+
                     connectToDB();
-                    $reservations = executePlainSQL("SELECT reservation.confno FROM reservation");
+                    $reservations = executePlainSQL("SELECT r.confno FROM reservation r WHERE NOT EXISTS (SELECT rent.confno FROM rental rent WHERE rent.confno = r.confno)");
                     echo  '<select name="confno"  multiple="no">';
 
                     while ($row = OCI_Fetch_Array($reservations, OCI_RETURN_NULLS+OCI_ASSOC))
@@ -258,14 +258,14 @@
         </form>
 
         <hr />
-         
+
         <!--
-        <form method="GET" action="clerk_rentalreservation.php"> 
+        <form method="GET" action="clerk_rentalreservation.php">
             <input type="hidden" id="showTableRequest" name="showTableRequest">
             <input type="submit" value="Generate Receipt" name="showTable"></p>
         </form>
                 -->
-        
+
         <?php
         if (isset($_POST['insertSubmit'])) {
             handlePOSTRequest();

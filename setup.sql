@@ -73,7 +73,8 @@ create table rental(
 	confno varchar2(50) null unique,
 	constraint rental_fk_res foreign key (confno) references reservation(confno) ON DELETE CASCADE,
 	constraint rental_fk_vehicle foreign key (vlicense) references vehicle(vlicense) ON DELETE CASCADE,
-	constraint rental_fk_customer foreign key (dlicense) references customer(dlicense) ON DELETE CASCADE
+	constraint rental_fk_customer foreign key (dlicense) references customer(dlicense) ON DELETE CASCADE,
+	constraint rental_valid_fromto check (fromdt < todt)
 );
 
 create table return(
@@ -82,7 +83,8 @@ create table return(
 	odometer float not null,
 	fulltank varchar2(20) not null,
 	value float not null,
-	constraint return_fk_rental foreign key (rentid) references rental(rentid) ON DELETE CASCADE
+	constraint return_fk_rental foreign key (rentid) references rental(rentid) ON DELETE CASCADE,
+	constraint rental_fulltank check (fulltank in ('YES', 'NO'))
 );
 --
 
@@ -213,18 +215,18 @@ insert into rental values('R0004', 1234567890123456, 25345, '144ABC', TO_TIMESTA
 insert into rental values('R0008', 1234567890123456, 25345, '145ABC', TO_TIMESTAMP('2019/11/23 10:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/12/30 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 'VA00008', 'RES0008');
 insert into rental values('R0015', 1234454656344564, 423533, '146ABC', TO_TIMESTAMP('2019/11/23 10:30:00', 'YYYY/MM/DD HH24:MI:SS'), TO_TIMESTAMP('2019/12/30 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 'VA00015', 'RES0015');
 
-insert into return values('R0001', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 45345, 'yes', 1000);
-insert into return values('R0002', TO_TIMESTAMP('2019/11/06 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 45345, 'yes', 300);
-insert into return values('R0003', TO_TIMESTAMP('2019/11/06 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 45345, 'yes', 300);
-insert into return values('R0005', TO_TIMESTAMP('2019/11/07 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 456300, 'yes', 8000);
-insert into return values('R0006', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 456300, 'yes', 850);
-insert into return values('R0007', TO_TIMESTAMP('2019/11/01 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 456300, 'yes', 800);
-insert into return values('R0009', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 456300, 'yes', 800);
-insert into return values('R0010', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 567090, 'yes', 810);
-insert into return values('R0011', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 234230, 'yes', 230);
-insert into return values('R0012', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 453233, 'yes', 800);
-insert into return values('R0018', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 545234, 'yes', 833);
-insert into return values('R0019', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 545230, 'yes', 1089);
-insert into return values('R0020', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 456300, 'yes', 400);
-insert into return values('R0021', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 456300, 'yes', 231);
-insert into return values('R0022', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 456300, 'yes', 123);
+insert into return values('R0001', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 45345, 'YES', 1000);
+insert into return values('R0002', TO_TIMESTAMP('2019/11/06 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 45345, 'YES', 300);
+insert into return values('R0003', TO_TIMESTAMP('2019/11/06 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 45345, 'YES', 300);
+insert into return values('R0005', TO_TIMESTAMP('2019/11/07 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 456300, 'YES', 8000);
+insert into return values('R0006', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 456300, 'YES', 850);
+insert into return values('R0007', TO_TIMESTAMP('2019/11/01 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 456300, 'YES', 800);
+insert into return values('R0009', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 456300, 'YES', 800);
+insert into return values('R0010', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 567090, 'YES', 810);
+insert into return values('R0011', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 234230, 'YES', 230);
+insert into return values('R0012', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 453233, 'YES', 800);
+insert into return values('R0018', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 545234, 'YES', 833);
+insert into return values('R0019', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 545230, 'YES', 1089);
+insert into return values('R0020', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 456300, 'YES', 400);
+insert into return values('R0021', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 456300, 'YES', 231);
+insert into return values('R0022', TO_TIMESTAMP('2019/11/23 16:30:00', 'YYYY/MM/DD HH24:MI:SS'), 456300, 'YES', 123);

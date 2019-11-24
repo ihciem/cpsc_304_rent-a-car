@@ -28,16 +28,16 @@
     </head>
 
     <body>
-        
+
 
         <hr />
 
         <!--Generate Receipt
-        <form method="GET" action="clerk_rentalnoreservation.php"> 
+        <form method="GET" action="clerk_rentalnoreservation.php">
             <input type="hidden" id="showTableRequest" name="showTableRequest">
             <input type="submit" value="Generate Receipt" name="showTable"></p>
         </form>
-        --> 
+        -->
         <?php
 		//this tells the system that it's no longer just parsing html; it's now parsing PHP ------------------------- END OF HTML ----------------------------
         include 'connectToDB.php';
@@ -45,6 +45,7 @@
 
         $success = True; //keep track of errors so it redirects the page only if there are no errors
         $db_conn = NULL; // edit the login credentials in connectToDB()
+        date_default_timezone_set('America/Los_Angeles');
         $show_debug_alert_messages = False; // set to True if you want alerts to show you which methods are being triggered (see how it is used in debugAlertMessage())
         //generated rentID for the rental table
 
@@ -169,7 +170,7 @@
             }
             executePlainSQL("UPDATE vehicle SET status = 'rented' WHERE vlicense ='" . $vlicense . "'");
             echo "<br> Updating vehicle status <br>";
-            
+
 
             echo $_POST['insfromdt'] . '<br>';
             echo $_POST['instodt'] . '<br>';
@@ -181,7 +182,7 @@
             $returnDate = new DateTime($_POST['instodt']);
             $returnDate = date_format($returnDate, 'd-M-Y h.i.s A');
             echo "<br> Grabbing format returnDate: " . $returnDate . "<br>";
-            
+
             //Getting the values from user and insert data into the table
             $tuple = array (
                 ":bind1" => $rentid,
@@ -198,7 +199,7 @@
                 $tuple
             );
 
-                
+
             executeBoundSQL("INSERT INTO rental VALUES (:bind1, :bind2, :bind3, :bind4, :bind5, :bind6, :bind7, :bind8)", $alltuples);
             echo "<br> Inserting values into rental table <br>";
             OCICommit($db_conn);
@@ -217,18 +218,6 @@
                 echo "<br> The number of tuples in demoTable: " . $row[0] . "<br>";
             }
         }
-        
-        /*
-        // HANDLER FOR PRINTING
-        function handleShowTableRequest() {
-            global $db_conn;
-            global $rentIDresGen;
-            $rentIDString = strval($rentIDresGen);
-
-            $result = executePlainSQL("SELECT R.rentid, R.fromdt, R.todt, v.vtname FROM rental R, vehicle v WHERE R.vlicense = v.vlicense AND R.rentid = '" . $rentIDString . "'");
-
-            printResult($result);
-        }*/
 
         // HANDLE ALL POST ROUTES
 	// A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
@@ -261,19 +250,32 @@
         }
 
         ?>
-        
+
 
         <h2>New Rental</h2>
         <hr />
         <form method="POST" action="clerk_rentalnoreservation.php"> <!--refresh page when submitted-->
             <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
-            Vehicle Type <input type="text" name="insvtname"> <br /><br />
+            Vehicle Type:
+            <?php
+
+                connectToDB();
+                $vehicles = executePlainSQL("SELECT vtname from vehicleType ORDER BY vtname");
+                echo  '<select name="vtname"  multiple="no">';
+
+                while ($row = OCI_Fetch_Array($vehicles, OCI_RETURN_NULLS+OCI_ASSOC))
+                {
+                    echo "<option value=\"". $row['VTNAME'] . "\">" . $row['VTNAME'] . "</option>";
+                }
+                echo '</select>';
+              ?>
+            <br /><br />
             Card Number: <input type="text" name="inscardno"> <br /><br />
             Starting Date: <input type="datetime-local" name="insfromdt"> <br /><br />
             Returning Date: <input type="datetime-local" name="instodt"> <br /><br />
             Drivers License:
                 <?php
-                    
+
                     connectToDB();
                     $dlicenses = executePlainSQL("SELECT dlicense FROM customer");
                     echo  '<select name="insdlicense"  multiple="no">';
