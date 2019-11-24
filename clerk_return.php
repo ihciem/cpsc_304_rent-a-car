@@ -135,13 +135,17 @@
 
             //Calculating Total Cost
             $rent_id = $_POST['rental'];
+            echo "<br> Grabbing rentid: " . $rent_id . "<br>";
+
             $from_dtSQL = executePlainSQL("SELECT fromdt FROM Rental WHERE rentid='" . $rent_id . "'");
             if ($row = OCI_Fetch_Array($from_dtSQL, OCI_BOTH)) {
                 $from_dt = $row[0];
+                echo "<br> Grabbing Starting Date: " . $row[0] . "<br>";
             }
             $to_dtSQL = executePlainSQL("SELECT todt FROM Rental WHERE rentid='" . $rent_id . "'");
             if ($row = OCI_Fetch_Array($to_dtSQL, OCI_BOTH)) {
                 $to_dt = $row[0];
+                echo "<br> Grabbing Return Date: " . $row[0] . "<br>";
             }
 
             // converting timestamp to DateTime objects
@@ -150,37 +154,48 @@
 
             // finding difference between DateTime objects
             $interval = $from_dtDT->diff($to_dtDT);
+            
             $difference = $interval->format("%a");
+            echo "<br> Grabbing period: " . $difference . "<br>";
 
             //Finding specific rates for the returned vehicle
             $w_rateSQL = executePlainSQL("SELECT vt.wrate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
             if ($row = OCI_Fetch_Array($w_rateSQL, OCI_BOTH)) {
                 $w_rate = $row[0];
+                echo "<br> Grabbing Weekly Rate: " . $row[0] . "<br>";
             }
             $d_rateSQL = executePlainSQL("SELECT vt.drate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
             if ($row = OCI_Fetch_Array($d_rateSQL, OCI_BOTH)) {
                 $d_rate = $row[0];
+                echo "<br> Grabbing Daily Rate: " . $row[0] . "<br>";
             }
             $wi_rateSQL = executePlainSQL("SELECT vt.wirate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
             if ($row = OCI_Fetch_Array($wi_rateSQL, OCI_BOTH)) {
                 $wi_rate = $row[0];
+                echo "<br> Grabbing Weekly Insurance Rate: " . $row[0] . "<br>";
             }
             $di_rateSQL = executePlainSQL("SELECT vt.dirate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
             if ($row = OCI_Fetch_Array($di_rateSQL, OCI_BOTH)) {
                 $di_rate = $row[0];
+                echo "<br> Grabbing Daily Insurance Rate: " . $row[0] . "<br>";
             }
 
             //Calculating cost in weeks and days
             $weeks = floor($difference / 7);
+            echo "<br> Weeks: " . $difference . "<br>";
             $days = $difference - ($weeks*7);
+            echo "<br> Days: " . $difference . "<br>";
 
             $cost = ($weeks*$w_rate + $weeks*$wi_rate) + ($days*$d_rate + $days*$di_rate);
+            echo "<br> Total Cost: " . $cost . "<br>";
             $driverate = ($weeks*$w_rate + $days*$d_rate);
+            echo "<br> Driving Rate: " . $driverate . "<br>";
             $insurrate = ($weeks*$wi_rate + $days*$di_rate);
+            echo "<br> Insurance Rate: " . $insurrate . "<br>";
                         
             $tuple = array (
                 ":bind1" => $_POST['rental'],
-                ":bind2" => $_POST['insreturndt'],
+                ":bind2" => $to_dt,
                 ":bind3" => $_POST['insodometer'], 
                 ":bind4" => $_POST['insfulltank'],
                 ":bind5" => $cost
@@ -223,9 +238,9 @@
         function handleShowTableRequest() {
             global $db_conn;
 
-            $result = executePlainSQL("SELECT rentid, returndt, value FROM return WHERE rentid = '" . $rent_id . "'");
+            // $result = executePlainSQL("SELECT rentid, returndt, value FROM return WHERE rentid = '" . $rent_id . "'");
 
-            printResult($result);
+            //printResult($result);
         }
 
         // HANDLE ALL POST ROUTES
@@ -280,19 +295,19 @@
                   ?>
                 <br><br/>
 
-            Return Date: <input type="datetime-local" name="insreturndt"> <br /><br />
             Odometer: <input type="text" name="insodometer"> <br /><br />
             Full Tank: <input type="text" name="insfulltank"> <br /><br />
             <input type="submit" value="Submit" name="insertSubmit"></p>
         </form>
 
         <hr />
-
-        <form method="GET" action="clerk_return.php"> <!--Generate Receipt-->
+        
+        <!--Generate Receipt
+        <form method="GET" action="clerk_return.php"> 
             <input type="hidden" id="showTableRequest" name="showTableRequest">
             <input type="submit" value="Generate Receipt" name="showTable"></p>
         </form>
-        
+        -->
         <?php
         if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
             handlePOSTRequest();

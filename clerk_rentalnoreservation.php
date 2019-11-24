@@ -28,37 +28,25 @@
     </head>
 
     <body>
-        <h2>New Rental</h2>
-        <hr />
-        <form method="POST" action="clerk_rentalnoreservation.php"> <!--refresh page when submitted-->
-            <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
-            Vehicle Type <input type="text" name="insvtname"> <br /><br />
-            Card Number: <input type="text" name="inscardno"> <br /><br />
-            Starting Date: <input type="datetime-local" name="insfromdt"> <br /><br />
-            Returning Date: <input type="datetime-local" name="instodt"> <br /><br />
-            Drivers License: <input type="text" name="insdlicense"> <br /><br />
-
-            <input type="submit" value="Submit" name="insertSubmit"></p>
-        </form>
+        
 
         <hr />
 
-        <form method="GET" action="clerk_rentalnoreservation.php"> <!--Generate Receipt-->
+        <!--Generate Receipt
+        <form method="GET" action="clerk_rentalnoreservation.php"> 
             <input type="hidden" id="showTableRequest" name="showTableRequest">
             <input type="submit" value="Generate Receipt" name="showTable"></p>
         </form>
-
+        --> 
         <?php
 		//this tells the system that it's no longer just parsing html; it's now parsing PHP ------------------------- END OF HTML ----------------------------
         include 'connectToDB.php';
         include 'printResult.php';
 
-        session_start();
-
         $success = True; //keep track of errors so it redirects the page only if there are no errors
         $db_conn = NULL; // edit the login credentials in connectToDB()
         $show_debug_alert_messages = False; // set to True if you want alerts to show you which methods are being triggered (see how it is used in debugAlertMessage())
-        $rentid = uniqid(); //generated rentID for the rental table
+        //generated rentID for the rental table
 
         function debugAlertMessage($message) {
             global $show_debug_alert_messages;
@@ -152,12 +140,24 @@
         // HANDLER FOR INSERT
         function handleInsertRequest() {
             global $db_conn;
-            global $rentid;
+            // Generate new unused rentid
+            $rentidResult = executePlainSQL("SELECT rentid FROM rental WHERE rentid = (SELECT MAX(rentid) FROM rental)");
+            $row = oci_fetch_array($rentidResult);
+            $prevRentid = $row[0];
+            $prevrentidSplit = preg_split('/[^A-Z0-9]+|(?<=[A-Z])(?=[0-9])|(?<=[0-9])(?=[A-Z])/', $prevRentid, 0, PREG_SPLIT_NO_EMPTY);
+            $paddedZeroes = strlen($prevrentidSplit[1]); // originl length of ID, needed in str_pad
+            $rentidNum = (int) preg_replace('/[^0-9]*/', '', $prevrentidSplit[1]);
+            $rentidNum++;
+            $rentidNum = str_pad($rentidNum, $paddedZeroes, '0', STR_PAD_LEFT);
+            $rentid = $prevrentidSplit[0] . $rentidNum;
+            echo "prevrentid: " . $prevRentid  . '<br>';
+            echo "rentid: " . $rentid . '<br>';
+
 
             // Find an available car
             $vt_name = $_POST['insvtname'];
 
-            $vlicenseSQL = executePlainSQL("SELECT v.vlicense From vehicle v WHERE v.vtname = '" . $vt_name . "' AND v.status = 'available' AND ROWNUM <= 1");
+            $vlicenseSQL = executePlainSQL("SELECT vlicense From vehicle WHERE vtname = '" . $vt_name . "' AND status = 'available' AND ROWNUM <= 1");
             if ($row = OCI_Fetch_Array($vlicenseSQL, OCI_BOTH)) {
                 $vlicense = $row[0];
                 echo "<br> Grabbing vlicense: " . $row[0] . "<br>";
@@ -169,28 +169,42 @@
             }
             executePlainSQL("UPDATE vehicle SET status = 'rented' WHERE vlicense ='" . $vlicense . "'");
             echo "<br> Updating vehicle status <br>";
+            
 
+            echo $_POST['insfromdt'] . '<br>';
+            echo $_POST['instodt'] . '<br>';
+
+            $startDate = new DateTime($_POST['insfromdt']);
+            $startDate = date_format($startDate, 'd-M-Y h.i.s A');
+            echo "<br> Grabbing format startDate: " . $startDate . "<br>";
+
+            $returnDate = new DateTime($_POST['instodt']);
+            $returnDate = date_format($returnDate, 'd-M-Y h.i.s A');
+            echo "<br> Grabbing format returnDate: " . $returnDate . "<br>";
+            
             //Getting the values from user and insert data into the table
             $tuple = array (
                 ":bind1" => $rentid,
                 ":bind2" => $_POST['inscardno'],
                 ":bind3" => $odometer,
                 ":bind4" => $vlicense,
-                ":bind5" => $_POST['insfromdt'],
-                ":bind6" => $_POST['instodt'],
+                ":bind5" => $startDate,
+                ":bind6" => $returnDate,
                 ":bind7" => $_POST['insdlicense'],
-                ":bind8" => null
+                ":bind8" => ""
             );
 
             $alltuples = array (
                 $tuple
             );
 
+                
             executeBoundSQL("INSERT INTO rental VALUES (:bind1, :bind2, :bind3, :bind4, :bind5, :bind6, :bind7, :bind8)", $alltuples);
+            echo "<br> Inserting values into rental table <br>";
             OCICommit($db_conn);
 
             $result = executePlainSQL("SELECT R.rentid, R.fromdt, R.todt, v.vtname FROM rental R, vehicle v WHERE R.vlicense = v.vlicense AND R.rentid = '" . $rentid . "'");
-
+            echo "<br> Grabbing receipt details <br>";
             printResult($result);
         }
 
@@ -204,6 +218,7 @@
             }
         }
         
+        /*
         // HANDLER FOR PRINTING
         function handleShowTableRequest() {
             global $db_conn;
@@ -213,7 +228,7 @@
             $result = executePlainSQL("SELECT R.rentid, R.fromdt, R.todt, v.vtname FROM rental R, vehicle v WHERE R.vlicense = v.vlicense AND R.rentid = '" . $rentIDString . "'");
 
             printResult($result);
-        }
+        }*/
 
         // HANDLE ALL POST ROUTES
 	// A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
@@ -245,11 +260,41 @@
             }
         }
 
-		if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
+        ?>
+        
+
+        <h2>New Rental</h2>
+        <hr />
+        <form method="POST" action="clerk_rentalnoreservation.php"> <!--refresh page when submitted-->
+            <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
+            Vehicle Type <input type="text" name="insvtname"> <br /><br />
+            Card Number: <input type="text" name="inscardno"> <br /><br />
+            Starting Date: <input type="datetime-local" name="insfromdt"> <br /><br />
+            Returning Date: <input type="datetime-local" name="instodt"> <br /><br />
+            Drivers License:
+                <?php
+                    
+                    connectToDB();
+                    $dlicenses = executePlainSQL("SELECT dlicense FROM customer");
+                    echo  '<select name="insdlicense"  multiple="no">';
+
+                    while ($row = OCI_Fetch_Array($dlicenses, OCI_RETURN_NULLS+OCI_ASSOC))
+                    {
+                        echo "<option value=\"". $row['DLICENSE'] . "\">" . $row['DLICENSE'] . "</option>";
+                    }
+                    echo '</select>';
+                  ?>
+                <br><br/>
+
+            <input type="submit" value="Submit" name="insertSubmit"></p>
+        </form>
+
+        <?php
+        if (isset($_POST['insertSubmit'])) {
             handlePOSTRequest();
         } else if (isset($_GET['countTupleRequest']) || isset($_GET['showTableRequest'])) {
             handleGETRequest();
         }
-		?>
+         ?>
 	</body>
 </html>

@@ -279,6 +279,7 @@ OCILogon below to be your ORACLE username and password -->
   }
   ?>
   <h2>Generate reports</h2>
+  <hr />
   <form method="GET" action="clerk_generate_report.php"> <!--refresh page when submitted-->
     <input type="hidden" id="generateReportRequest" name="generateReportRequest">
     Type: <input type="radio" name="reportType" <?php if (isset($_GET['reportType']) && $_GET['reportType']=="rentals") echo "checked";?> value="rentals" required> Rentals

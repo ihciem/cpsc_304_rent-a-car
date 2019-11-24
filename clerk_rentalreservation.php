@@ -19,7 +19,7 @@
         $success = True; //keep track of errors so it redirects the page only if there are no errors
         $db_conn = NULL; // edit the login credentials in connectToDB()
         $show_debug_alert_messages = False; // set to True if you want alerts to show you which methods are being triggered (see how it is used in debugAlertMessage())
-        $rentid = uniqid(); //generated rentID for the rental table
+        
 
         function debugAlertMessage($message) {
             global $show_debug_alert_messages;
@@ -103,8 +103,19 @@
         // HANDLER FOR INSERT
         function handleInsertRequest() {
             global $db_conn;
-            global $rentid;
-            //global $rentIDresGen;
+            
+            // Generate new unused rentid
+            $rentidResult = executePlainSQL("SELECT rentid FROM rental WHERE rentid = (SELECT MAX(rentid) FROM rental)");
+            $row = oci_fetch_array($rentidResult);
+            $prevRentid = $row[0];
+            $prevrentidSplit = preg_split('/[^A-Z0-9]+|(?<=[A-Z])(?=[0-9])|(?<=[0-9])(?=[A-Z])/', $prevRentid, 0, PREG_SPLIT_NO_EMPTY);
+            $paddedZeroes = strlen($prevrentidSplit[1]); // originl length of ID, needed in str_pad
+            $rentidNum = (int) preg_replace('/[^0-9]*/', '', $prevrentidSplit[1]);
+            $rentidNum++;
+            $rentidNum = str_pad($rentidNum, $paddedZeroes, '0', STR_PAD_LEFT);
+            $rentid = $prevrentidSplit[0] . $rentidNum;
+            echo "prevrentid: " . $prevRentid  . '<br>';
+            echo "rentid: " . $rentid . '<br>';
 
             // Finding vehicle from reservation confno
 
@@ -127,26 +138,20 @@
             $fromdtSQL = executePlainSQL("SELECT fromdt FROM reservation WHERE confno = '" . $confno . "'");
             if ($row = OCI_Fetch_Array($fromdtSQL, OCI_BOTH)) {
                 $fromdt = $row[0];
-                echo "<br> Grabbing fromtdt <br>";
+                echo "<br> Grabbing fromdt: " . $row[0] . "<br>";
             }
             $todtSQL = executePlainSQL("SELECT todt FROM reservation WHERE confno = '" . $confno . "'");
             if ($row = OCI_Fetch_Array($todtSQL, OCI_BOTH)) {
                 $todt = $row[0];
-                echo "<br> Grabbing todt <br>";
+                echo "<br> Grabbing todt: " . $row[0] . "<br>";
             }
 
             $dlicenseSQL = executePlainSQL("SELECT dlicense FROM reservation WHERE confno = '" . $confno . "'");
             if ($row = OCI_Fetch_Array($dlicenseSQL, OCI_BOTH)) {
                 $dlicense = $row[0];
-                echo "<br> Grabbing dlicense <br>";
+                echo "<br> Grabbing dlicense: " . $row[0] . "<br>";
             }
-
-            //Getting the values from user and insert data into the table
-            echo "<br> Grabbing rentid before: " . $rentid . "<br>";
-            //$rentIDresGen = $rentIDresGen + 1;;
-            echo "<br> Grabbing rentid after: " . $rentid . "<br>";
-            //$rentIDString = strval($_SESSION["rentid"]);
-
+    
             $tuple = array (
                 ":bind1" => $rentid,
                 ":bind2" => $_POST['cardno'],
@@ -162,14 +167,19 @@
                 $tuple
             );
 
+            executePlainSQL("DELETE FROM rental WHERE rentid = '" . $rentid . "'");
+            echo "<br> Deleting Existing Tables with the same rentid <br>";
 
             executeBoundSQL("INSERT INTO rental VALUES (:bind1, :bind2, :bind3, :bind4, :bind5, :bind6, :bind7, :bind8)", $alltuples);
+            echo "<br> Inserting values into rental table <br>";
+
             OCICommit($db_conn);
 
             $result = executePlainSQL("SELECT R.rentid, R.fromdt, R.todt, v.vtname FROM rental R, vehicle v WHERE R.vlicense = v.vlicense AND R.rentid = '" . $rentid . "'");
+            echo "<br> Grabbing receipt details <br>";
 
             printResult($result);
-
+            echo "<br> Printing Receipt <br>";
         }
 
         function handleCountRequest() {
