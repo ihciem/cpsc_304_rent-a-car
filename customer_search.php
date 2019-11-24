@@ -22,45 +22,34 @@
     </head>
 
     <body>
-        <h2>Reset</h2>
-        <p>If you wish to reset the table press on the reset button. If this is the first time you're running this page, you MUST use reset</p>
-
-        <form method="POST" action="customer_search.php">
-            <!-- if you want another page to load after the button is clicked, you have to specify that page in the action parameter -->
-            <input type="hidden" id="resetTablesRequest" name="resetTablesRequest">
-            <p><input type="submit" value="Reset" name="reset"></p>
-        </form>
+        <h2>Welcome to Rent-A-Car!</h2>
 
         <hr />
 
-        <h2>Insert Values into DemoTable</h2>
-        <form method="POST" action="customer_search.php"> <!--refresh page when submitted-->
-            <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
-            Number: <input type="text" name="insNo"> <br /><br />
-            Name: <input type="text" name="insName"> <br /><br />
-
-            <input type="submit" value="Insert" name="insertSubmit"></p>
-        </form>
-
-        <hr />
-
-        <h2>Update Name in DemoTable</h2>
-        <p>The values are case sensitive and if you enter in the wrong case, the update statement will not do anything.</p>
-
-        <form method="POST" action="customer_search.php"> <!--refresh page when submitted-->
-            <input type="hidden" id="updateQueryRequest" name="updateQueryRequest">
-            Old Name: <input type="text" name="oldName"> <br /><br />
-            New Name: <input type="text" name="newName"> <br /><br />
-
-            <input type="submit" value="Update" name="updateSubmit"></p>
-        </form>
-
-        <hr />
-
-        <h2>Search for available rentals</h2>
+        <h2>Show Available Vehicles</h2>
         <form method="GET" action="customer_search.php"> <!--refresh page when submitted-->
-            <input type="hidden" id="countTupleRequest" name="countTupleRequest">
-            <input type="submit" name="countTuples"></p>
+            Search By
+            <br/>
+
+            <input type="hidden" id="showAvailableVehiclesRequest" name="showAvailableVehiclesRequest">
+            Vehicle Type: <input type="text" name="vType"> <br /><br />
+            Location: <input type="text" name="Location"> <br /><br />
+            Start Date: <input type="datetime-local" name="startDate"> <br /><br />
+            Return Date: <input type="datetime-local" name="returnDate"> <br /><br />
+            <p><input type="submit" value="Show Available Vehicles" name="showAvailableVehicles"></p>
+        </form>
+
+        <hr />
+
+        <h2>Make Reservation</h2>
+        <form method="POST" action="customer_search.php"> <!--refresh page when submitted-->
+            <input type="hidden" id="makeReservationRequest" name="makeReservationRequest">
+            Vehicle Type: <input type="text" name="vType"> <br /><br />
+            Driver's License: <input type="text" name="dLicense" value="<?php echo ((isset($_GET["dLicense"]))?htmlspecialchars($_GET["dLicense"]):""); ?>"> <br /><br />
+            Start Date: <input type="datetime-local" name="startDate"> <br /><br />
+            Return Date: <input type="datetime-local" name="returnDate"> <br /><br />
+
+            <input type="submit" value="Make Reservation" name="makeReservation"></p>
         </form>
 
         <?php
@@ -138,48 +127,69 @@
                     $success = False;
                 }
             }
+            return $statement;
         }
 
-        function handleUpdateRequest() {
+        // TODO: HERE
+        function handleMakeReservationRequest() {
             global $db_conn;
 
-            $old_name = $_POST['oldName'];
-            $new_name = $_POST['newName'];
-
-            // you need the wrap the old name and new name values with single quotations
-            executePlainSQL("UPDATE demoTable SET name='" . $new_name . "' WHERE name='" . $old_name . "'");
-            OCICommit($db_conn);
-        }
-
-        function handleResetRequest() {
-            global $db_conn;
-            // Drop old table
-            executePlainSQL("DROP TABLE demoTable");
-
-            // Create new table
-            echo "<br> creating new table <br>";
-            executePlainSQL("CREATE TABLE demoTable (id int PRIMARY KEY, name char(30))");
-            OCICommit($db_conn);
-        }
-
-        function handleInsertRequest() {
-            global $db_conn;
+            // Generate new unused confID
+            $confnoResult = executePlainSQL("SELECT confno FROM reservation WHERE confno = (SELECT MAX(confno) FROM reservation)");
+            $row = oci_fetch_array($confnoResult);
+            $prevConfno = $row[0];
+            $prevConfnoSplit = preg_split('/[^A-Z0-9]+|(?<=[A-Z])(?=[0-9])|(?<=[0-9])(?=[A-Z])/', $prevConfno, 0, PREG_SPLIT_NO_EMPTY);
+            $paddedZeroes = strlen($prevConfnoSplit[1]); // originl length of ID, needed in str_pad
+            $confnoNum = (int) preg_replace('/[^0-9]*/', '', $prevConfnoSplit[1]);
+            $confnoNum++;
+            $confnoNum = str_pad($confnoNum, $paddedZeroes, '0', STR_PAD_LEFT);
+            $confno = $prevConfnoSplit[0] . $confnoNum;
+//            echo "prevConfno: " . $prevConfno  . '<br>';
+//            echo "confno: " . $confno . '<br>';
 
             //Getting the values from user and insert data into the table
             $tuple = array (
-                ":bind1" => $_POST['insNo'],
-                ":bind2" => $_POST['insName']
+                ":bind1" => $_POST['dLicense']
             );
 
             $alltuples = array (
                 $tuple
             );
 
-            executeBoundSQL("insert into demoTable values (:bind1, :bind2)", $alltuples);
+            $dLicenseResult = executeBoundSQL("SELECT COUNT(*) FROM customer c1 WHERE EXISTS (SELECT * FROM customer c2 WHERE c1.dlicense = :bind1 AND c1.dlicense = c2.dlicense)", $alltuples);
+            $row = oci_fetch_row($dLicenseResult);
+//            echo "Does dLicense exist: " . $row[0] . '<br>';
+            if ($row[0] == 0) {
+                header("Location: https://www.students.cs.ubc.ca/~" . $_SESSION['username'] .  "/customer_new.php?dLicense=" . $_POST['dLicense']);
+                die();
+            }
+
+            $startDate = new DateTime($_POST['startDate']);
+            $startDate = date_format($startDate, 'd-M-Y h.i.s A');
+//            echo $startDate;
+            $returnDate = new DateTime($_POST['returnDate']);
+            $returnDate = date_format($returnDate,'d-M-Y h.i.s A');
+//            echo $returnDate;
+
+            //Getting the values from user and insert data into the table
+            $tuple = array (
+                ":bind1" => $confno,
+                ":bind2" => $_POST['vType'],
+                ":bind3" => $_POST['dLicense'],
+                ":bind4" => $startDate,
+                ":bind5" => $returnDate
+            );
+
+            $alltuples = array (
+                $tuple
+            );
+
+            executeBoundSQL("INSERT INTO reservation VALUES (:bind1, :bind2, :bind3, :bind4, :bind5)", $alltuples);
             OCICommit($db_conn);
+
         }
 
-        function handleCountRequest() {
+        function handleShowAvailableVehiclesRequest() {
             global $db_conn;
 
             $result = executePlainSQL("SELECT Count(*) FROM demoTable");
@@ -195,12 +205,8 @@
 	// A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
         function handlePOSTRequest() {
             if (connectToDB()) {
-                if (array_key_exists('resetTablesRequest', $_POST)) {
-                    handleResetRequest();
-                } else if (array_key_exists('updateQueryRequest', $_POST)) {
-                    handleUpdateRequest();
-                } else if (array_key_exists('insertQueryRequest', $_POST)) {
-                    handleInsertRequest();
+                if (array_key_exists('makeReservationRequest', $_POST)) {
+                    handleMakeReservationRequest();
                 }
 
                 disconnectFromDB();
@@ -211,17 +217,17 @@
 	// A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
         function handleGETRequest() {
             if (connectToDB()) {
-                if (array_key_exists('countTuples', $_GET)) {
-                    handleCountRequest();
+                if (array_key_exists('showAvailableVehiclesRequest', $_GET)) {
+                    handleShowAvailableVehiclesRequest();
                 }
 
                 disconnectFromDB();
             }
         }
 
-		if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
+		if (isset($_POST['makeReservation'])) {
             handlePOSTRequest();
-        } else if (isset($_GET['countTupleRequest'])) {
+        } else if (isset($_GET['showAvailableVehiclesRequest'])) {
             handleGETRequest();
         }
 		?>

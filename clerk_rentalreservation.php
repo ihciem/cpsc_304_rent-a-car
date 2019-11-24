@@ -222,7 +222,7 @@
         function handleGETRequest() {
             if (connectToDB()) {
                 if (array_key_exists('countTuples', $_GET)) {
-                    handleCountRequest();
+                    handleShowAvailableVehiclesRequest();
                 } else if (array_key_exists('showTable', $_GET)) {
                     handleShowTableRequest();
                 }
