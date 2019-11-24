@@ -23,11 +23,11 @@
       <hr />
         <!--Add data to specific table-->
         <h2>Insert Values into a Table</h2>
-        <form method="POST" action="customer_search.php"> <!--refresh page when submitted-->
+        <form method="POST" action="administrator.php"> <!--refresh page when submitted-->
             <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
+            Table Name: <input type="text" name="insTableName"> <br /><br />
             Value: <input type="text" name="insValue"> <br /><br />
             Column: <input type="text" name="insValue"> <br /><br />
-            Table: <input type="text" name="insTableName"> <br /><br />
 
             <input type="submit" value="Insert" name="insertSubmit"></p>
         </form>
@@ -36,11 +36,13 @@
 
         <!--Delete data in a specific table-->
         <h2>Delete Data from a Table</h2>
-        <form method="GET" action="administrator.php"> <!--refresh page when submitted-->
-          <input type="hidden" id="showTableRequest" name="showTableRequest">
+        <form method="POST" action="administrator.php"> <!--refresh page when submitted-->
+          <input type="hidden" id="deleteTupleRequest" name="deleteTupleRequest">
           Table Name: <input type="text" name="insDTableName"> <br /><br />
-          Condition
-          <p><input type="submit" value="Show Table" name="showTable"></p>
+          Column Name: <input type="text" name="insDColumnName"> <br /><br />
+          Value: <input type="text" name="insDValue"> <br /><br />
+          
+          <p><input type="submit" value="Delete" name="deleteTuple"></p>
           
       </form>
 
@@ -49,12 +51,12 @@
         <!--Update data in a specific table-->
         <h2>Update Values in a Table</h2>
 
-        <form method="POST" action="customer_search.php"> <!--refresh page when submitted-->
+        <form method="POST" action="administrator.php"> <!--refresh page when submitted-->
             <input type="hidden" id="updateQueryRequest" name="updateQueryRequest">
-            Old Name: <input type="text" name="oldName"> <br /><br />
-            New Name: <input type="text" name="newName"> <br /><br />
-            Table Name: <input type="text" name="insDTableName"> <br /><br />
-
+            Table Name: <input type="text" name="insUTableName"> <br /><br />
+            Column Name: <input type="text" name="insWhere"> <br /><br />
+            Old Value: <input type="text" name="insWhereValue"> <br /><br />
+            New Value: <input type="text" name="newValue"> <br /><br />
             <input type="submit" value="Update" name="updateSubmit"></p>
         </form>
 
@@ -214,11 +216,51 @@
           printResult($result7);
       }
 
+      function handleShowTableRequest(){
+          global $db_conn;
+
+          $table = $_GET['insVTableName'];
+
+          $result = executePlainSQL("SELECT * FROM $table ");
+
+          printResult($result);
+      }
+
+      function handleDeleteTupleRequest(){
+          global $db_conn;
+
+          $dt_name = $_POST['insDTableName'];
+          $c_name = $_POST['insDColumnName'];
+          $pk = $_POST['insDValue'];
+
+          executePlainSQL("DELETE FROM $dt_name WHERE $c_name ='" . $pk . "'");
+          OCI_Commit($db_conn);
+      }
+
+      function handleUpdateRequest() {
+        global $db_conn;
+
+        $ut_name = $_POST['insUTableName'];
+        $cc = $_POST['insWhere'];
+        $cv = $_POST['insWhereValue'];
+        $newval = $_POST['newValue'];
+        
+        // you need the wrap the old name and new name values with single quotations
+        executePlainSQL("UPDATE $ut_name SET $cc='" . $newval . "' WHERE $cc ='" . $cv . "'");
+        OCICommit($db_conn);
+    }
+
       // HANDLE ALL POST ROUTES
       // A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
       function handlePOSTRequest() {
           if (connectToDB()) {
-              disconnectFromDB();
+            if (array_key_exists('deleteTupleRequest', $_POST)) {
+                handleDeleteTupleRequest();
+            } else if (array_key_exists('updateQueryRequest', $_POST)) {
+                handleUpdateRequest();
+            }
+
+            disconnectFromDB();
           }
       }
 
@@ -226,18 +268,87 @@
       // A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
       function handleGETRequest() {
           if (connectToDB()) {
-              if (array_key_exists('showAllTables', $_GET)) {
+              if (array_key_exists('showAllTablesRequest', $_GET)) {
                   handleShowAllTablesRequest();
-              }
+              } else if (array_key_exists('showTableRequest', $_GET)) {
+                handleShowTableRequest();
+            }
 
               disconnectFromDB();
           }
       }
 
-//      if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
-//          handlePOSTRequest();
-//      } else
-      if (isset($_GET['showAllTablesRequest'])) {
+     if (isset($_POST['deleteTuple']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
+          handlePOSTRequest();
+     } else if (isset($_GET['showAllTables']) || isset($_GET['showTable'])) {
+          handleGETRequest();
+      }
+      ?>
+
+<body>
+      <h2>Manipulate This Database</h2>
+      <hr />
+      <!--View All Tables-->
+      <h2>View all Tables</h2>
+      <form method="GET" action="administrator.php"> <!--refresh page when submitted-->
+          <input type="hidden" id="showAllTablesRequest" name="showAllTablesRequest">
+          <p><input type="submit" value="Show Tables" name="showAllTables"></p>
+      </form>
+
+      <hr />
+        <!--Add data to specific table-->
+        <h2>Insert Values into a Table</h2>
+        <form method="POST" action="administrator.php"> <!--refresh page when submitted-->
+            <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
+            Table Name: <input type="text" name="insTableName"> <br /><br />
+            Value: <input type="text" name="insValue"> <br /><br />
+            Column: <input type="text" name="insValue"> <br /><br />
+
+            <input type="submit" value="Insert" name="insertSubmit"></p>
+        </form>
+
+        <hr />
+
+        <!--Delete data in a specific table-->
+        <h2>Delete Data from a Table</h2>
+        <form method="POST" action="administrator.php"> <!--refresh page when submitted-->
+          <input type="hidden" id="deleteTupleRequest" name="deleteTupleRequest">
+          Table Name: <input type="text" name="insDTableName"> <br /><br />
+          Column Name: <input type="text" name="insDColumnName"> <br /><br />
+          Value: <input type="text" name="insDValue"> <br /><br />
+          
+          <p><input type="submit" value="Delete" name="deleteTuple"></p>
+          
+      </form>
+
+        
+        <hr />
+        <!--Update data in a specific table-->
+        <h2>Update Values in a Table</h2>
+
+        <form method="POST" action="administrator.php"> <!--refresh page when submitted-->
+            <input type="hidden" id="updateQueryRequest" name="updateQueryRequest">
+            Table Name: <input type="text" name="insUTableName"> <br /><br />
+            Column Name: <input type="text" name="insWhere"> <br /><br />
+            Old Value: <input type="text" name="insWhereValue"> <br /><br />
+            New Value: <input type="text" name="newValue"> <br /><br />
+            <input type="submit" value="Update" name="updateSubmit"></p>
+        </form>
+
+        <hr />
+        <!--View data in a specific table-->
+        <h2>View Data from a Table</h2>
+        <form method="GET" action="administrator.php"> <!--refresh page when submitted-->
+          <input type="hidden" id="showTableRequest" name="showTableRequest">
+          Table Name: <input type="text" name="insVTableName"> <br /><br />
+          <p><input type="submit" value="Show Table" name="showTable"></p>
+          
+      </form>
+
+      <?php
+      if (isset($_POST['deleteTuple']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
+          handlePOSTRequest();
+     } else if (isset($_GET['showAllTables']) || isset($_GET['showTable'])) {
           handleGETRequest();
       }
       ?>
