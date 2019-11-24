@@ -253,7 +253,7 @@
         function handlePOSTRequest() {
             if (connectToDB()) {
                 if (array_key_exists('resetTablesRequest', $_POST)) {
-                    handleResetRequest();
+                    handleCreateCustomerRequest();
                 } else if (array_key_exists('updateQueryRequest', $_POST)) {
                     handleUpdateRequest();
                 } else if (array_key_exists('insertQueryRequest', $_POST)) {
@@ -269,7 +269,7 @@
         function handleGETRequest() {
             if (connectToDB()) {
                 if (array_key_exists('countTuples', $_GET)) {
-                    handleCountRequest();
+                    handleShowAvailableVehiclesRequest();
                 } else if (array_key_exists('showTable', $_GET)) {
                     handleShowTableRequest();
                 }

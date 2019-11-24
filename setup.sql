@@ -161,6 +161,8 @@ insert into customer values('VA00019', 'Ronald Weasley', '280 Ginger St.', 60412
 insert into customer values('VA00020', 'Severus Snape', '4580 Death Eater Dr.', 6041234580);
 insert into customer values('VA00021', 'Albus Dumbledore', '100 Hogwarts Pl.', 6041234581);
 insert into customer values('VA00022', 'Newton Scamander', '100 F.B. Dr.', 6041234582);
+-- hasn't made a reservation
+insert into customer values('VA00023', 'Ji-Eun Park', '25th St.', 6040001111);
 
 
 -- rented and returned

@@ -32,8 +32,6 @@ OCILogon below to be your ORACLE username and password -->
   $success = True; //keep track of errors so it redirects the page only if there are no errors
   $db_conn = NULL; // edit the login credentials in connectToDB()
   $show_debug_alert_messages = False; // set to True if you want alerts to show you which methods are being triggered (see how it is used in debugAlertMessage())
-  $rentals_status;
-  $returns_status;
   date_default_timezone_set('America/Los_Angeles');
   $date = date("Y/m/d");
   function debugAlertMessage($message) {
