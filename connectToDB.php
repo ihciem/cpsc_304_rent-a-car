@@ -4,9 +4,14 @@
 function connectToDB() {
     global $db_conn;
 
+    session_start();
+    $_SESSION['username'] = "calwin98";
+    $_SESSION['password'] = "a14604169";
+
     // Your username is ora_(CWL_ID) and the password is a(student number). For example,
     // ora_platypus is the username and a12345678 is the password.
-    $db_conn = OCILogon("ora_djhong@stu", "a46967162", "dbhost.students.cs.ubc.ca:1522/stu");
+
+    $db_conn = OCILogon("ora_" . $_SESSION['username'], $_SESSION['password'], "dbhost.students.cs.ubc.ca:1522/stu");
 
     if ($db_conn) {
         debugAlertMessage("Database is Connected");
