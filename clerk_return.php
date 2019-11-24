@@ -149,18 +149,17 @@
             }
 
             // converting timestamp to DateTime objects
-            /*
+            
             $from_dtDT = new DateTime($from_dt);
             echo "<br> Grabbing DateTime fromdt: " . $from_dtDT . "<br>";
             $to_dtDT = new DateTime($to_dt);
             echo "<br> Grabbing DateTime todt: " . $to_dtDT . "<br>";
-            */
-
+            
             // finding difference between DateTime objects
-            $interval = $from_dt->diff($to_dt);
+            $interval = $from_dtDT->diff($to_dtDT);
             echo "<br> Grabbing interval: " . $interval . "<br>";
             
-            $difference = $interval->format("%a");
+            $difference = $interval->format("%d");
             echo "<br> Grabbing period: " . $difference . "<br>";
 
             //Finding specific rates for the returned vehicle
