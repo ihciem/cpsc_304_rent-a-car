@@ -15,14 +15,11 @@
       <hr />
         <!--Add data to specific table-->
         <h2>Insert Values into a Table</h2>
-        <form method="POST" action="administrator.php"> <!--refresh page when submitted-->
-            <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
-            Table Name: <input type="text" name="insTableName"> <br /><br />
-            Value: <input type="text" name="insValue"> <br /><br />
-            Column: <input type="text" name="insValue"> <br /><br />
-
-            <input type="submit" value="Insert" name="insertSubmit"></p>
-        </form>
+        <form action="insert.php">
+          <!-- if you want another page to load after the button is clicked, you have to specify that page in the action parameter -->
+          
+          <p><input type="submit" value="Click me to insert a tuple"></p>
+      </form>
 
         <hr />
 
