@@ -132,7 +132,7 @@
 
             $rent_id = $_POST['rental'];
 
-            $odometer = $_POST['odometer'];
+            $odometer = $_POST['insodometer'];
             $odometerSQL = executePlainSQL("SELECT v.odometer FROM rental r, vehicle v WHERE r.rentid='" . $rent_id . "'");
             if ($row = OCI_Fetch_Array($odometerSQL, OCI_BOTH)) {
               if ($odometer <= $row[0]) {
