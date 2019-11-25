@@ -126,18 +126,6 @@ function handleCreateCustomerRequest() {
     die();
 }
 
-function handleShowAvailableVehiclesRequest() {
-    global $db_conn;
-
-    $result = executePlainSQL("SELECT Count(*) FROM demoTable");
-
-    if (($row = oci_fetch_row($result)) != false) {
-        echo "<br> The number of tuples in demoTable: " . $row[0] . "<br>";
-        printResult(executePlainSQL("SELECT id, name FROM demoTable"));
-        // echo print_r($names);
-    }
-}
-
 // HANDLE ALL POST ROUTES
 // A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
 function handlePOSTRequest() {
