@@ -42,7 +42,7 @@
 
             <input type="hidden" id="showAvailableVehiclesRequest" name="showAvailableVehiclesRequest">
             Vehicle Type: <input type="text" name="vType">
-            Location: <input type="text" name="Location">
+            Location: <input type="text" name="location">
             Start Date: <input type="datetime-local" name="startDate">
             Return Date: <input type="datetime-local" name="returnDate"> <br /><br />
             <p><input type="submit" value="Show Available Vehicles" name="showAvailableVehicles"></p>
@@ -55,17 +55,17 @@
         function handleShowAvailableVehiclesRequest() {
             global $db_conn;
 
-            $startDate = new DateTime($_POST['startDate']);
+            $startDate = new DateTime($_GET['startDate']);
             $startDate = date_format($startDate, 'd-M-Y h.i.s A');
 //            echo $startDate;
-            $returnDate = new DateTime($_POST['returnDate']);
+            $returnDate = new DateTime($_GET['returnDate']);
             $returnDate = date_format($returnDate,'d-M-Y h.i.s A');
 //            echo $returnDate;
 
             //Getting the values from user and insert data into the table
             $tuple = array (
-                ":bind1" => $_POST['vType'],
-                ":bind2" => $_POST['location'],
+                ":bind1" => $_GET['vType'],
+                ":bind2" => $_GET['location'],
                 ":bind3" => $startDate,
                 ":bind4" => $returnDate
             );
@@ -74,10 +74,29 @@
                 $tuple
             );
 
-            if ($_GET['vType'] == null && $_GET['location'] == null && $_GET['startDate'] == null && $_GET['returnDate'] == null) {
-                $result = executePlainSQL("SELECT * FROM vehicle WHERE status = 'available' ORDER BY vid");
-                $numberOfResults = count(oci_fetch_array($result));
-            }
+//            if ($_GET['vType'] == null && $_GET['location'] == null && $_GET['startDate'] == null && $_GET['returnDate'] == null) { // no filters
+//                $result = executePlainSQL("SELECT * FROM vehicle WHERE status = 'available' ORDER BY vid");
+//                $numberOfResults = oci_fetch_array(executePlainSQL("SELECT COUNT(*) FROM vehicle WHERE status = 'available'"))[0];
+//            } else { // vType filter
+//                $result = executeBoundSQL("SELECT * FROM vehicle WHERE status = 'available' AND vtname = :bind1 INTERSECT SELECT * FROM vehicle WHERE status = 'available' AND location = :bind2", $alltuples);
+//                $numberOfResults = oci_fetch_array(executeBoundSQL("SELECT COUNT(*) FROM (SELECT * FROM vehicle WHERE status = 'available' AND vtname = :bind1 INTERSECT SELECT * FROM vehicle WHERE status = 'available' AND location = :bind2)", $alltuples))[0];
+//            }
+
+            $result = executeBoundSQL("SELECT * FROM 
+                                               (SELECT * FROM vehicle WHERE status = 'available' AND vtname = :bind1
+                                               INTERSECT
+                                               SELECT * FROM vehicle WHERE status = 'available' AND location = :bind2) t1
+                                               INNER JOIN
+                                               (SELECT * FROM rental WHERE NOT ((fromdt <= :bind3 AND todt >= :bind3) AND (fromdt <= :bind4 AND todt >= :bind4))) t2
+                                               ON t1.vlicense = t2.vlicense", $alltuples);
+            $numberOfResults = oci_fetch_array(executeBoundSQL("SELECT COUNT(*) FROM (
+                                               SELECT * FROM 
+                                               (SELECT * FROM vehicle WHERE status = 'available' AND vtname = :bind1
+                                               INTERSECT
+                                               SELECT * FROM vehicle WHERE status = 'available' AND location = :bind2) t1
+                                               INNER JOIN
+                                               (SELECT * FROM rental WHERE NOT ((fromdt <= :bind3 AND todt >= :bind3) AND (fromdt <= :bind4 AND todt >= :bind4))) t2
+                                               ON t1.vlicense = t2.vlicense)", $alltuples))[0];
 
             echo "<strong>Number of Available Vehicles: </strong>" . $numberOfResults . "</br>";
             printResult($result);
@@ -190,7 +209,6 @@
             return $statement;
         }
 
-        // TODO: HERE
         function handleMakeReservationRequest() {
             global $db_conn;
 
