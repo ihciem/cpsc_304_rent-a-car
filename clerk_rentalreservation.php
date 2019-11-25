@@ -121,6 +121,14 @@
                 echo "<br> There are no vehicles of this type available. Please upgrade the customer to another vehicle type. <br>";
             }
 
+            if ($continueProcessing) {
+              $rentalMade = executePlainSQL("SELECT r.confno FROM rental r WHERE r.confno='" . $confno . "'");
+              if ($row = OCI_Fetch_Array($rentalMade, OCI_BOTH)) {
+                echo "This reservation has already been processed into a rental. Please refresh the page to see the list of reservations not yet processed.";
+                $continueProcessing = false;
+              }
+            }
+
             if ($continueProcessing)  {
               // Finding vehicle odometer from vehicle license
               $odometerSQL = executePlainSQL("SELECT odometer FROM vehicle WHERE vlicense = '" . $vlicense . "'");
@@ -243,7 +251,7 @@
                     connectToDB();
                     // List of reservations that have yet to be processed into a rental
                     $reservations = executePlainSQL("SELECT r.confno FROM reservation r WHERE NOT EXISTS (SELECT rent.confno FROM rental rent WHERE rent.confno = r.confno)");
-                    echo  '<select name="confno"  multiple="no">';
+                    echo  '<select name="confno"  multiple="no" required>';
                     while ($row = OCI_Fetch_Array($reservations, OCI_RETURN_NULLS+OCI_ASSOC)) {
                         echo "<option value=\"". $row['CONFNO'] . "\">" . $row['CONFNO'] . "</option>";
                     }
@@ -257,7 +265,6 @@
         <hr />
 
         <form action="clerk_rentalnoreservation.php">
-              <!-- if you want another page to load after the button is clicked, you have to specify that page in the action parameter -->
 
               <p><input type="submit" value="NO RESERVATION"></p>
         </form>

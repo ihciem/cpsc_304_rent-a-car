@@ -128,104 +128,140 @@
 
         function handleInsertRequest() {
             global $db_conn;
+            $continueProcessing = true;
 
-
-            //Getting the values from user and insert data into the table
-
-
-            //Calculating Total Cost
             $rent_id = $_POST['rental'];
-            echo "<br> Grabbing rentid: " . $rent_id . "<br>";
 
-            $from_dtSQL = executePlainSQL("SELECT fromdt FROM Rental WHERE rentid='" . $rent_id . "'");
-            if ($row = OCI_Fetch_Array($from_dtSQL, OCI_BOTH)) {
-                $from_dt = $row[0];
-                echo "<br> Grabbing Starting Date: " . $row[0] . "<br>";
-            }
-            $to_dtSQL = executePlainSQL("SELECT todt FROM Rental WHERE rentid='" . $rent_id . "'");
-            if ($row = OCI_Fetch_Array($to_dtSQL, OCI_BOTH)) {
-                $to_dt = $row[0];
-                echo "<br> Grabbing Return Date: " . $row[0] . "<br>";
+            $odometer = $_POST['odometer'];
+            $odometerSQL = executePlainSQL("SELECT v.odometer FROM rental r, vehicle v WHERE r.rentid='" . $rent_id . "'");
+            if ($row = OCI_Fetch_Array($odometerSQL, OCI_BOTH)) {
+              if ($odometer <= $row[0]) {
+                echo "Please enter the correct number for the odometer (should be greater than before it was rented).";
+                $continueProcessing = false;
+              }
             }
 
-            // converting timestamp to DateTime objects
-
-            $from_dtDT = new DateTime($from_dt);
-            echo "<br> Grabbing DateTime fromdt: " . $from_dtDT . "<br>";
-            $to_dtDT = new DateTime($to_dt);
-            echo "<br> Grabbing DateTime todt: " . $to_dtDT . "<br>";
-
-            // finding difference between DateTime objects
-            $interval = $from_dtDT->diff($to_dtDT);
-            echo "<br> Grabbing interval: " . $interval . "<br>";
-
-            $difference = $interval->format("%d");
-            echo "<br> Grabbing period: " . $difference . "<br>";
-
-            //Finding specific rates for the returned vehicle
-            $w_rateSQL = executePlainSQL("SELECT vt.wrate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
-            if ($row = OCI_Fetch_Array($w_rateSQL, OCI_BOTH)) {
-                $w_rate = $row[0];
-                echo "<br> Grabbing Weekly Rate: " . $row[0] . "<br>";
-            }
-            $d_rateSQL = executePlainSQL("SELECT vt.drate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
-            if ($row = OCI_Fetch_Array($d_rateSQL, OCI_BOTH)) {
-                $d_rate = $row[0];
-                echo "<br> Grabbing Daily Rate: " . $row[0] . "<br>";
-            }
-            $wi_rateSQL = executePlainSQL("SELECT vt.wirate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
-            if ($row = OCI_Fetch_Array($wi_rateSQL, OCI_BOTH)) {
-                $wi_rate = $row[0];
-                echo "<br> Grabbing Weekly Insurance Rate: " . $row[0] . "<br>";
-            }
-            $di_rateSQL = executePlainSQL("SELECT vt.dirate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
-            if ($row = OCI_Fetch_Array($di_rateSQL, OCI_BOTH)) {
-                $di_rate = $row[0];
-                echo "<br> Grabbing Daily Insurance Rate: " . $row[0] . "<br>";
+            if ($continueProcessing) {
+              $alreadyReturned = executePlainSQL("SELECT return.rentid FROM return WHERE return.rentid='" . $rent_id . "'");
+              if ($row = OCI_Fetch_Array($alreadyReturned, OCI_BOTH)) {
+                echo "This return has already been processed. Please refresh the page to see the list of rentals not yet returned.";
+                $continueProcessing = false;
+              }
             }
 
-            //Calculating cost in weeks and days
-            $weeks = floor($difference / 7);
-            echo "<br> Weeks: " . $difference . "<br>";
-            $days = $difference - ($weeks*7);
-            echo "<br> Days: " . $difference . "<br>";
-
-            $cost = ($weeks*$w_rate + $weeks*$wi_rate) + ($days*$d_rate + $days*$di_rate);
-            echo "<br> Total Cost: " . $cost . "<br>";
-            $driverate = ($weeks*$w_rate + $days*$d_rate);
-            echo "<br> Driving Rate: " . $driverate . "<br>";
-            $insurrate = ($weeks*$wi_rate + $days*$di_rate);
-            echo "<br> Insurance Rate: " . $insurrate . "<br>";
-
-            $tuple = array (
-                ":bind1" => $_POST['rental'],
-                ":bind2" => $to_dt,
-                ":bind3" => $_POST['insodometer'],
-                ":bind4" => strtoupper($_POST['insfulltank']),
-                ":bind5" => $cost
-            );
-
-            $alltuples = array (
-                $tuple
-            );
-
-            executeBoundSQL("insert into return values (:bind1, :bind2, :bind3, :bind4, :bind5)", $alltuples);
-            OCICommit($db_conn);
-
-            // Show cost breakdown
-            if ($row = OCI_Fetch_Array($cost, OCI_BOTH)) {
-                echo "<br>Total Cost Breakdown: ". $row[0]. "<br>";
-            }
-            if ($row = OCI_Fetch_Array($driverate, OCI_BOTH)) {
-                echo "<br> Driving Costs: " . $row[0] . "<br>";
-            }
-            if ($row = OCI_Fetch_Array($insurrate, OCI_BOTH)) {
-                echo "<br> Insurance Costs: " . $row[0] . "<br>";
+            if ($continueProcessing) {
+              $vlicense = executePlainSQL("SELECT rental.vlicense FROM rental WHERE rental.rentid='" . $rent_id . "'");
+              if ($row = OCI_Fetch_Array($vlicense, OCI_BOTH)) {
+                  $vlicense = $row[0];
+                  executePlainSQL("UPDATE vehicle SET status = 'rented' WHERE vlicense ='" . $vlicense . "'");
+              } else {
+                echo "There is a database problem with the vehicle being returned. Please update the vehicle first.";
+                $continueProcessing = false;
+              }
             }
 
-            $result = executePlainSQL("SELECT rentid, returndt, value FROM return WHERE rentid = '" . $rent_id . "'");
+            if ($continueProcessing) {
 
-            printResult($result);
+              echo "<br> RentID: " . $rent_id;
+
+              $confnoSQL = executePlainSQL("SELECT rental.confno FROM rental WHERE rental.rentid='" . $rent_id . "'");
+              if ($row = OCI_Fetch_Array($confnoSQL, OCI_BOTH)) {
+                  $confno = $row[0];
+              }
+
+              echo "<br> Reservation confirmation number: " . $confno . "<br>";
+
+              $from_dtSQL = executePlainSQL("SELECT fromdt FROM rental WHERE rentid='" . $rent_id . "'");
+              if ($row = OCI_Fetch_Array($from_dtSQL, OCI_BOTH)) {
+                  $from_dt = $row[0];
+                  echo "<br> Starting Date and Time: " . $row[0];
+              }
+              $to_dtSQL = executePlainSQL("SELECT todt FROM rental WHERE rentid='" . $rent_id . "'");
+              if ($row = OCI_Fetch_Array($to_dtSQL, OCI_BOTH)) {
+                  $to_dt = $row[0];
+                  echo "<br> Return Date and Time: " . $row[0];
+              }
+
+              // converting timestamp to DateTime objects
+              $from_dtDT = new DateTime();
+              $from_dtDT->setTimestamp(strtotime($from_dt));
+              $to_dtDT = new DateTime($to_dt);
+              $to_dtDT->setTimestamp(strtotime($to_dt));
+
+              // finding difference between DateTime objects
+              $interval = $from_dtDT->diff($to_dtDT);
+              $difference = $interval->format('%a days %H hours %I minutes');
+              echo "<br> <b>Total Rental Time:</b> " . $difference . "<br>";
+
+              echo "<br> <b>RATES </b>";
+              //Finding specific rates for the returned vehicle
+              $w_rateSQL = executePlainSQL("SELECT vt.wrate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
+              if ($row = OCI_Fetch_Array($w_rateSQL, OCI_BOTH)) {
+                  $w_rate = $row[0];
+                  echo "<br> Weekly Rate: " . $row[0];
+              }
+              $d_rateSQL = executePlainSQL("SELECT vt.drate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
+              if ($row = OCI_Fetch_Array($d_rateSQL, OCI_BOTH)) {
+                  $d_rate = $row[0];
+                  echo "<br> Daily Rate: " . $row[0];
+              }
+              $wi_rateSQL = executePlainSQL("SELECT vt.wirate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
+              if ($row = OCI_Fetch_Array($wi_rateSQL, OCI_BOTH)) {
+                  $wi_rate = $row[0];
+                  echo "<br> Weekly Insurance Rate: " . $row[0];
+              }
+              $di_rateSQL = executePlainSQL("SELECT vt.dirate FROM vehicleType vt, rental r, vehicle v WHERE r.rentid ='" . $rent_id . "' AND r.vlicense = v.vlicense AND v.vtname = vt.vtname");
+              if ($row = OCI_Fetch_Array($di_rateSQL, OCI_BOTH)) {
+                  $di_rate = $row[0];
+                  echo "<br> Daily Insurance Rate: " . $row[0] . "<br>";
+              }
+
+              //Calculating cost in weeks and days
+              $weeks = floor($interval->format('%a') / 7);
+              echo "<br> Rental time in weeks: " . $weeks;
+              $days = $interval->format('%a') - ($weeks*7);
+              echo "<br> Rental time in days: " . $days . "<br>";
+              $days = $interval->format('%a') - ($weeks*7);
+
+              echo "<br> <b>COST CALCULATIONS </b>";
+              $cost = ($weeks*$w_rate + $weeks*$wi_rate) + ($days*$d_rate + $days*$di_rate);
+              echo "<br> Cost = ". $weeks . "*$" . $w_rate . "+" . $days . "$*" . $d_rate. "+" . $weeks . "$*" . $wi_rate . "+" . $days . "$*" . $di_rate;
+              $driverate = ($weeks*$w_rate + $days*$d_rate);
+              echo "<br> Driving Costs: $" . $driverate;
+              $insurrate = ($weeks*$wi_rate + $days*$di_rate);
+              echo "<br> Insurance Costs: $" . $insurrate;
+              echo "<br> <u><b>TOTAL COST:</b></u> $" . $cost . "<br>". "<br>";
+
+              $tuple = array (
+                  ":bind1" => $_POST['rental'],
+                  ":bind2" => $to_dt,
+                  ":bind3" => $_POST['insodometer'],
+                  ":bind4" => strtoupper($_POST['insfulltank']),
+                  ":bind5" => $cost
+              );
+
+              $alltuples = array (
+                  $tuple
+              );
+
+              executeBoundSQL("insert into return values (:bind1, :bind2, :bind3, :bind4, :bind5)", $alltuples);
+              OCICommit($db_conn);
+
+              // Show cost breakdown
+              if ($row = OCI_Fetch_Array($cost, OCI_BOTH)) {
+                  echo "<br>Total Cost Breakdown: ". $row[0]. "<br>";
+              }
+              if ($row = OCI_Fetch_Array($driverate, OCI_BOTH)) {
+                  echo "<br> Driving Costs: " . $row[0] . "<br>";
+              }
+              if ($row = OCI_Fetch_Array($insurrate, OCI_BOTH)) {
+                  echo "<br> Insurance Costs: " . $row[0] . "<br>";
+              }
+
+              $result = executePlainSQL("SELECT rentid, returndt, value FROM return WHERE rentid = '" . $rent_id . "'");
+
+              printResult($result);
+            }
         }
 
         function handleCountRequest() {
@@ -288,8 +324,8 @@
                 <?php
 
                     connectToDB();
-                    $rentals = executePlainSQL("SELECT rentid FROM rental");
-                    echo  '<select name="rental"  multiple="no">';
+                    $rentals = executePlainSQL("SELECT rent.rentid FROM rental rent WHERE NOT EXISTS (SELECT r.rentid FROM return r WHERE r.rentid = rent.rentid)");
+                    echo  '<select name="rental"  multiple="no" required>';
 
                     while ($row = OCI_Fetch_Array($rentals, OCI_RETURN_NULLS+OCI_ASSOC))
                     {
@@ -299,9 +335,9 @@
                   ?>
                 <br><br/>
 
-            Odometer: <input type="text" name="insodometer"> <br /><br />
-            Full Tank: <input type="radio" name="insfulltank" value="yes"> Yes
-                       <input type="radio" name="insfulltank" value="no"> No<br>
+            Odometer: <input type="text" name="insodometer" required> <br /><br />
+            Full Tank: <input type="radio" name="insfulltank" value="YES" required> Yes
+                       <input type="radio" name="insfulltank" value="NO" required> No<br><br />
             <input type="submit" value="Submit" name="insertSubmit"></p>
         </form>
 
