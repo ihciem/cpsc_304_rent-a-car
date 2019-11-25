@@ -303,9 +303,7 @@
 	// A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
         function handleGETRequest() {
             if (connectToDB()) {
-                if (array_key_exists('countTuples', $_GET)) {
-                    handleShowAvailableVehiclesRequest();
-                } else if (array_key_exists('showTable', $_GET)) {
+                if (array_key_exists('showTable', $_GET)) {
                     handleShowTableRequest();
                 }
 
