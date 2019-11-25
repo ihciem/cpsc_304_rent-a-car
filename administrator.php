@@ -13,14 +13,6 @@
     <body>
       <h2>Manipulate This Database</h2>
       <hr />
-      <!--View All Tables-->
-      <h2>View all Tables</h2>
-      <form method="GET" action="administrator.php"> <!--refresh page when submitted-->
-          <input type="hidden" id="showAllTablesRequest" name="showAllTablesRequest">
-          <p><input type="submit" value="Show Tables" name="showAllTables"></p>
-      </form>
-
-      <hr />
         <!--Add data to specific table-->
         <h2>Insert Values into a Table</h2>
         <form method="POST" action="administrator.php"> <!--refresh page when submitted-->
@@ -60,6 +52,15 @@
             <input type="submit" value="Update" name="updateSubmit"></p>
         </form>
 
+
+        <hr />
+        <!--View All Tables-->
+        <h2>View all Tables</h2>
+        <form method="GET" action="administrator.php"> <!--refresh page when submitted-->
+            <input type="hidden" id="showAllTablesRequest" name="showAllTablesRequest">
+            <p><input type="submit" value="Show Tables" name="showAllTables"></p>
+        </form>
+
         <hr />
         <!--View data in a specific table-->
         <h2>View Data from a Table</h2>
@@ -75,6 +76,7 @@
       <?php
       //this tells the system that it's no longer just parsing html; it's now parsing PHP
       include 'connectToDB.php';
+      include 'printResult.php';
 
       $success = True; //keep track of errors so it redirects the page only if there are no errors
       $db_conn = NULL; // edit the login credentials in connectToDB()
@@ -151,33 +153,33 @@
       function handleShowAllTablesRequest() {
           global $db_conn;
 
-          $result1 = executePlainSQL("SELECT * FROM branch");
-          $result2 = executePlainSQL("SELECT * FROM vehicleType");
-          $result3 = executePlainSQL("SELECT * FROM vehicle");
-          $result4 = executePlainSQL("SELECT * FROM customer");
-          $result5 = executePlainSQL("SELECT * FROM reservation");
-          $result6 = executePlainSQL("SELECT * FROM rental");
-          $result7 = executePlainSQL("SELECT * FROM return");
+          $result1 = executePlainSQL("SELECT * FROM branch ORDER BY city");
+          $result2 = executePlainSQL("SELECT * FROM vehicleType ORDER BY vtname");
+          $result3 = executePlainSQL("SELECT * FROM vehicle ORDER BY vid");
+          $result4 = executePlainSQL("SELECT * FROM customer ORDER BY dlicense");
+          $result5 = executePlainSQL("SELECT * FROM reservation ORDER BY confno");
+          $result6 = executePlainSQL("SELECT * FROM rental ORDER BY rentid");
+          $result7 = executePlainSQL("SELECT * FROM return ORDER BY rentid");
           
-          echo "<br> Branch";
+          echo "<br> <strong><p style=\"font-size:35px\">Branch</p></strong>";
           printResult($result1);
 
-          echo "<br> VehicleType";
+          echo "<br> <strong><p style=\"font-size:35px\">VehicleType</p></strong>";
           printResult($result2);
 
-          echo "<br> Vehicle";
+          echo "<br> <strong><p style=\"font-size:35px\">Vehicle</p></strong>";
           printResult($result3);
 
-          echo "<br> Customer";
+          echo "<br> <strong><p style=\"font-size:35px\">Customer</p></strong>";
           printResult($result4);
 
-          echo "<br> Reservation";
+          echo "<br> <strong><p style=\"font-size:35px\">Reservation</p></strong>";
           printResult($result5);
 
-          echo "<br> Rental";
+          echo "<br> <strong><p style=\"font-size:35px\">Rental</p></strong>";
           printResult($result6);
 
-          echo "<br> Return";
+          echo "<br> <strong><p style=\"font-size:35px\">Return</p></strong>";
           printResult($result7);
       }
 
@@ -188,6 +190,7 @@
 
           $result = executePlainSQL("SELECT * FROM $table ");
 
+          echo "<strong><p style=\"font-size:35px\">$table</p></strong><br>";
           printResult($result);
       }
 
@@ -244,74 +247,6 @@
       }
 
      if (isset($_POST['deleteTuple']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
-          handlePOSTRequest();
-     } else if (isset($_GET['showAllTables']) || isset($_GET['showTable'])) {
-          handleGETRequest();
-      }
-      ?>
-
-<body>
-      <h2>Manipulate This Database</h2>
-      <hr />
-      <!--View All Tables-->
-      <h2>View all Tables</h2>
-      <form method="GET" action="administrator.php"> <!--refresh page when submitted-->
-          <input type="hidden" id="showAllTablesRequest" name="showAllTablesRequest">
-          <p><input type="submit" value="Show Tables" name="showAllTables"></p>
-      </form>
-
-      <hr />
-        <!--Add data to specific table-->
-        <h2>Insert Values into a Table</h2>
-        <form method="POST" action="administrator.php"> <!--refresh page when submitted-->
-            <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
-            Table Name: <input type="text" name="insTableName"> <br /><br />
-            Value: <input type="text" name="insValue"> <br /><br />
-            Column: <input type="text" name="insValue"> <br /><br />
-
-            <input type="submit" value="Insert" name="insertSubmit"></p>
-        </form>
-
-        <hr />
-
-        <!--Delete data in a specific table-->
-        <h2>Delete Data from a Table</h2>
-        <form method="POST" action="administrator.php"> <!--refresh page when submitted-->
-          <input type="hidden" id="deleteTupleRequest" name="deleteTupleRequest">
-          Table Name: <input type="text" name="insDTableName"> <br /><br />
-          Column Name: <input type="text" name="insDColumnName"> <br /><br />
-          Value: <input type="text" name="insDValue"> <br /><br />
-          
-          <p><input type="submit" value="Delete" name="deleteTuple"></p>
-          
-      </form>
-
-        
-        <hr />
-        <!--Update data in a specific table-->
-        <h2>Update Values in a Table</h2>
-
-        <form method="POST" action="administrator.php"> <!--refresh page when submitted-->
-            <input type="hidden" id="updateQueryRequest" name="updateQueryRequest">
-            Table Name: <input type="text" name="insUTableName"> <br /><br />
-            Column Name: <input type="text" name="insWhere"> <br /><br />
-            Old Value: <input type="text" name="insWhereValue"> <br /><br />
-            New Value: <input type="text" name="newValue"> <br /><br />
-            <input type="submit" value="Update" name="updateSubmit"></p>
-        </form>
-
-        <hr />
-        <!--View data in a specific table-->
-        <h2>View Data from a Table</h2>
-        <form method="GET" action="administrator.php"> <!--refresh page when submitted-->
-          <input type="hidden" id="showTableRequest" name="showTableRequest">
-          Table Name: <input type="text" name="insVTableName"> <br /><br />
-          <p><input type="submit" value="Show Table" name="showTable"></p>
-          
-      </form>
-
-      <?php
-      if (isset($_POST['deleteTuple']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit'])) {
           handlePOSTRequest();
      } else if (isset($_GET['showAllTables']) || isset($_GET['showTable'])) {
           handleGETRequest();
