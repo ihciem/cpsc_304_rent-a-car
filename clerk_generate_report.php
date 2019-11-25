@@ -204,8 +204,6 @@ OCILogon below to be your ORACLE username and password -->
     <input type="radio" name="reportType" <?php if (isset($_GET['reportType']) && $_GET['reportType']=="returns") echo "checked";?> value="returns" required> Returns<br><br />
     Branch:
     <?php
-    include 'connectToDB.php';
-    include 'printResult.php';
     connectToDB();
     $branches = executePlainSQL("SELECT branch.location, branch.city FROM branch ORDER BY branch.city, branch.location");
     echo  '<select name="branch" required multiple="no">';
